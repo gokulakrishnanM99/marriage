@@ -70,3 +70,9 @@ exists. Behaviour is identical either way — only the reach changes.
   pauses when the browser tab is hidden.
 - **Wedding date** is the `WEDDING_DATE` constant in the `<script>` block (drives the
   countdown). Ceremony date/time/venue live in the invitation section.
+- **The convergence countdown** measures against `PLAN_WINDOW` (365 days): the two beams
+  and the progress bar under them both sit at `daysLeft / PLAN_WINDOW` along the line, so
+  they close by one day's worth every day and meet at the centre on the day itself.
+- **The journey** opens with the diya centred on screen and closes with the mandapam
+  centred on screen, on any aspect ratio — `travelFrom` / `travelTo` in `layoutJourney()`
+  are derived from the two nodes' positions rather than from the track's edges.

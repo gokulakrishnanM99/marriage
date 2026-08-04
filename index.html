@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <meta charset="utf-8" />
 <title>Thirumalai &amp; Pooja — Two Paths, One Sky</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -177,11 +178,18 @@
     position: relative;
   }
 
+  /* The cosmos is pinned to the LARGE viewport, not the current one. On a phone
+     the address bar collapses on the first scroll and the viewport grows by
+     ~100px; sized to 100vh the canvas had to be re-laid-out and re-rastered
+     mid-scroll, and the strip it had not caught up on showed the frame from
+     before the timeline darkened — the band that looked like a mask peeling
+     off. At 100lvh the box never changes, so nothing is ever re-exposed. */
   #field {
     position: fixed;
     inset: 0;
-    width: 100vw;
+    width: 100%;
     height: 100vh;
+    height: 100lvh;
     z-index: 0;
     display: block;
   }
@@ -481,6 +489,7 @@
   }
 
   .name {
+    --name-fill: linear-gradient(178deg, #fff 0%, #F5E9D2 62%, var(--gold) 100%);
     font-family: var(--font-display);
     font-weight: 500;
     white-space: nowrap;
@@ -488,19 +497,39 @@
     letter-spacing: .015em;
     line-height: 1.08;
     padding-bottom: .12em;
-    color: #fff;
-    background: linear-gradient(178deg, #fff 0%, #F5E9D2 62%, var(--gold) 100%);
+    /* Solid ink is what shows if the gradient clip below is unavailable, so the
+       names can never end up invisible. */
+    color: #F7EFDC;
+    background: var(--name-fill);
     -webkit-background-clip: text;
     background-clip: text;
-    -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 60px rgba(234, 197, 108, .16));
   }
 
+  /* Each letter carries the gradient itself rather than inheriting the clip
+     from .name. The letters are animated inline-blocks, and a transformed
+     child paints into its own layer — one the parent's background-clip:text
+     mask does not reach, so on mobile Chrome the names came out fully
+     transparent (which read as "the font never loaded"). The gradient is 2°
+     off vertical and every letter shares the same line box, so drawing it per
+     letter is pixel-identical to drawing it across the word. */
   .name .ch {
     display: inline-block;
+    background: var(--name-fill);
+    -webkit-background-clip: text;
+    background-clip: text;
     opacity: 0;
     transform: translateY(24px) rotateX(-45deg);
     transform-origin: 50% 100%;
+  }
+
+  /* Knock the ink out only where the clip is actually supported. */
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+
+    .name,
+    .name .ch {
+      -webkit-text-fill-color: transparent;
+    }
   }
 
   .name.lit .ch {
@@ -1013,6 +1042,7 @@
     position: relative;
     width: min(920px, 96vw);
     border-radius: 28px;
+    /* widened on a desk only — see the min-width:1100px rule below */
     background:
       radial-gradient(120% 80% at 15% 0%, rgba(234, 197, 108, .10), transparent 55%),
       radial-gradient(120% 90% at 90% 100%, rgba(151, 70, 91, .12), transparent 55%),
@@ -1475,6 +1505,12 @@
     animation: shutter .5s ease-out;
   }
 
+  @media(min-width:1100px) {
+    .glass {
+      width: min(1060px, 92vw);
+    }
+  }
+
   /* ===================== DJ FREQUENCY ===================== */
   #dj .panel {
     max-width: 960px;
@@ -1485,9 +1521,96 @@
     align-items: start;
   }
 
+  .dj-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* Middle widths: deck beside wall, with the list run full width underneath. */
+  .dj-list {
+    grid-column: 1 / -1;
+  }
+
   @media(max-width:820px) {
     #dj .panel {
       grid-template-columns: 1fr;
+    }
+
+    /* Phone order: the wall first — it is the thing worth looking at — then the
+       deck to type into, then what everyone else has asked for. */
+    #dj .hex-wall {
+      order: 1;
+    }
+
+    #dj .scope {
+      order: 2;
+    }
+
+    #dj .dj-list {
+      order: 3;
+    }
+  }
+
+  /* Desk and up: deck and wall out to the two sides with the list between them,
+     and both given the room to actually be looked at. */
+  @media(min-width:1100px) {
+    /* Three abreast needs the width back that the chapter gutter was holding,
+       or the deck and the wall would each come out narrower than they were side
+       by side — the opposite of the point. */
+    #dj {
+      padding-left: clamp(24px, 2.4vw, 48px);
+      padding-right: clamp(24px, 2.4vw, 48px);
+    }
+
+    #dj .panel {
+      max-width: min(1800px, 96vw);
+      /* The list only ever holds a dot, a title and a count, so it takes the
+         narrow middle and the two instruments take the width. */
+      grid-template-columns: minmax(0, 1.28fr) minmax(0, .85fr) minmax(0, 1.48fr);
+      gap: clamp(26px, 2.6vw, 44px);
+    }
+
+    #dj .scope {
+      order: 1;
+      padding: clamp(28px, 2vw, 40px);
+    }
+
+    #dj .dj-list {
+      order: 2;
+      grid-column: auto;
+    }
+
+    #dj .hex-wall {
+      order: 3;
+    }
+
+    #dj .hex-room-outer {
+      max-width: 720px;
+    }
+
+    /* The deck's interior grows with it — a bigger panel around the same small
+       trace and field would just read as padding. */
+    #dj #scope-canvas {
+      height: clamp(168px, 12vw, 230px);
+    }
+
+    #dj .dj-input input {
+      font-size: 14.5px;
+      padding: 17px 20px;
+    }
+
+    #dj .dj-input button {
+      font-size: 12px;
+      padding: 0 30px;
+    }
+
+    #dj .dj-note {
+      font-size: 11px;
+    }
+
+    #dj .queue {
+      margin-top: 0;
     }
   }
 
@@ -1573,6 +1696,19 @@
 
   .dj-input button:active {
     transform: translateY(1px) scale(.98);
+  }
+
+  /* Both picks spent. The button goes cold so the turn reads as over at a
+     glance — but only the button: the field still takes typing, so the signal
+     trace still draws and the wall still lights. */
+  .dj-input button:disabled {
+    background: linear-gradient(120deg, #4A4550, #3A343F);
+    color: rgba(241, 236, 224, .38);
+    cursor: not-allowed;
+  }
+
+  .dj-input button:disabled:active {
+    transform: none;
   }
 
   .dj-note {
@@ -1876,22 +2012,89 @@
   .queue {
     list-style: none;
     margin: 18px 0 0;
-    padding: 0;
+    /* room for the lit rows' own glow, which a scroll container would clip */
+    padding: 4px 6px 4px 4px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 160px;
+    gap: 7px;
+    overflow: hidden;
+  }
+
+  /* Opened out. The list scrolls, and it dissolves at both ends instead of
+     stopping at a hard edge — the same soft falloff the rest of the page uses —
+     with a rail drawn in the two ray colours rather than the browser's own. */
+  .queue.expanded {
     overflow-y: auto;
+    max-height: clamp(280px, 46vh, 520px);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(234, 197, 108, .45) transparent;
+  }
+
+  .queue.expanded::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .queue.expanded::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .queue.expanded::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--gold), var(--wine));
+  }
+
+  /* A pick of yours that has slipped past the tenth place, carried up so you can
+     still find it. It keeps its real standing beside it, and a gap holds it
+     apart from the ranked ten below. */
+  .queue .q-rank {
+    flex: 0 0 auto;
+    font-size: 11px;
+    letter-spacing: .08em;
+    color: var(--ink-faint);
+  }
+
+  .queue li.pinned+li:not(.pinned) {
+    margin-top: 12px;
+  }
+
+  .queue-more {
+    align-self: center;
+    margin-top: 14px;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: color .3s, border-color .3s, box-shadow .3s;
+  }
+
+  .queue-more:hover {
+    color: var(--ink);
+    border-color: rgba(234, 197, 108, .5);
+    box-shadow: 0 0 26px -10px rgba(234, 197, 108, .85);
+  }
+
+  .queue-more[hidden] {
+    display: none;
   }
 
   .queue li {
     font-family: var(--font-mono);
-    font-size: 11.5px;
+    /* The song titles are the point of this list, so they are sized to be read
+       across the room rather than to match the small caps around them. */
+    font-size: clamp(13.5px, 1.05vw, 16px);
     color: var(--ink);
     display: flex;
-    gap: 10px;
+    gap: 11px;
     align-items: center;
-    padding: 9px 13px;
+    padding: 12px 16px;
     border: 1px solid var(--line);
     border-radius: 10px;
     background: rgba(255, 255, 255, .02);
@@ -1906,8 +2109,8 @@
   }
 
   .queue li .grv {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     flex: 0 0 auto;
   }
@@ -1957,15 +2160,15 @@
 
   .queue .q-count {
     flex: 0 0 auto;
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: .1em;
     color: var(--ink-dim);
   }
 
   .queue .q-del {
     flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     padding: 0;
     line-height: 1;
     background: none;
@@ -1973,7 +2176,7 @@
     border-radius: 50%;
     color: var(--ink-dim);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: color .25s, border-color .25s;
   }
@@ -2839,7 +3042,10 @@
             <div class="room-ao" aria-hidden="true"></div>
           </div>
           <div class="hex-hint">✦ each drop lights a hex</div>
+        </div>
+        <div class="dj-list">
           <ul class="queue" id="queue"></ul>
+          <button class="queue-more" id="queueMore" type="button" hidden></button>
         </div>
       </div>
     </section>
@@ -4466,7 +4672,20 @@
       ["uRes", "uTime", "uScroll", "uPhase", "uPointer"].forEach(function (n) { uni[n] = gl.getUniformLocation(prog, n); });
       return true;
     }
-    function sizeField() { if (!gl) return; fieldCanvas.width = Math.floor(innerWidth * FIELD_DPR); fieldCanvas.height = Math.floor(innerHeight * FIELD_DPR); gl.viewport(0, 0, fieldCanvas.width, fieldCanvas.height); }
+    /* Measure the canvas' own box rather than the window. They are not the same
+       thing on a phone — the box is the large viewport, innerHeight is whatever
+       the address bar is currently leaving — and sizing the bitmap from the
+       window stretched the cosmos vertically by the height of that bar. Bailing
+       out when nothing actually changed also keeps the address bar sliding in
+       and out from reallocating the GL buffer on every scroll. */
+    function sizeField() {
+      if (!gl) return;
+      var r = fieldCanvas.getBoundingClientRect();
+      var w = Math.max(1, Math.floor(r.width * FIELD_DPR)), h = Math.max(1, Math.floor(r.height * FIELD_DPR));
+      if (fieldCanvas.width === w && fieldCanvas.height === h) return;
+      fieldCanvas.width = w; fieldCanvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
     var glOK = initGL(); sizeField();
     function renderField(now) {
       if (!gl) return;
@@ -4536,9 +4755,22 @@
     var jTitle = document.getElementById("journeyTitle");
     var nodes = [].slice.call(document.querySelectorAll(".node"));
     var VB_W = 2600, VB_H = 700, trackW = 0, HALF_GLYPH = 33;
+    var jPin = document.getElementById("journey-pin");
+    /* The two ends of the horizontal travel, in track pixels. The journey opens
+       with the diya at the centre of the screen and closes with the mandapam at
+       the centre of the screen, whatever the screen's shape — which is what
+       makes it land the same on a tall phone and a wide laptop. Both are free to
+       fall outside the track's own width: the rail only occupies x 200–2465 of a
+       2600 canvas, so either end just reveals empty sky, which is where the beam
+       is born and where it arrives. */
+    var travelFrom = 0, travelTo = 0;
+    var ORIGIN_X = 200, MANDAPAM_X = 2465;   // the diya and the mandapam, in SVG user units
 
     function layoutJourney() {
-      var vh = innerHeight, vw = innerWidth;
+      /* Measure the pinned box, not the window. On a phone they differ by the
+         height of the address bar, and reading the window put the rail lower
+         than the box that clips it. */
+      var vh = jPin.clientHeight || innerHeight, vw = jPin.clientWidth || innerWidth;
       var scaleY = (vh * 0.86) / VB_H, railH = VB_H * scaleY, topOff = (vh - railH) / 2;
       trackW = Math.max(VB_W * scaleY * 1.9, vw * (vw < 720 ? 4.8 : 3.7));
       track.style.width = trackW + "px"; svg.style.width = trackW + "px"; svg.style.height = railH + "px"; svg.style.top = topOff + "px";
@@ -4548,17 +4780,19 @@
         if (n.classList.contains("up")) { n.style.top = (ay + HALF_GLYPH) + "px"; n.style.transform = "translate(-50%,-100%)"; }
         else { n.style.top = (ay - HALF_GLYPH) + "px"; n.style.transform = "translate(-50%,0)"; }
       });
+      travelFrom = (ORIGIN_X / VB_W) * trackW - vw / 2;
+      travelTo = (MANDAPAM_X / VB_W) * trackW - vw / 2;
     }
     var JOURNEY_TRAVEL_END = 0.88;  // horizontal travel finishes here; the last 12% dwells on the mandapam
     function updateJourney() {
-      var rect = jWrap.getBoundingClientRect(), total = jWrap.offsetHeight - innerHeight;
-      var vh = innerHeight, vw = innerWidth;
-      var rightPadding = 18; // precise small 18px padding so mandapam won't stick to the border edge
-      var p = Math.min(1, Math.max(0, (-rect.top) / total)), maxX = Math.max(0, trackW - vw + rightPadding);
+      var vh = jPin.clientHeight || innerHeight;
+      var rect = jWrap.getBoundingClientRect(), total = jWrap.offsetHeight - vh;
+      var p = Math.min(1, Math.max(0, (-rect.top) / total));
       // Remap so the track reaches the mandapam (fully scrolled) at JOURNEY_TRAVEL_END, then holds
       // for the remaining scroll — a pause that lets the mandapam be seen before the section releases.
       var travel = Math.min(1, p / JOURNEY_TRAVEL_END);
-      track.style.transform = "translateX(" + (-travel * maxX) + "px)"; jBar.style.right = (100 - travel * 100) + "%";
+      var x = travelFrom + travel * (travelTo - travelFrom);
+      track.style.transform = "translateX(" + (-x) + "px)"; jBar.style.right = (100 - travel * 100) + "%";
       var tf = Math.max(0, 1 - p / 0.12); jTitle.style.opacity = tf; jTitle.style.transform = "translateY(" + (-(1 - tf) * 24) + "px)";
       for (var i = 0; i < nodes.length; i++) { var nr = nodes[i].getBoundingClientRect(); if (nr.left < innerWidth * 0.82 && nr.right > innerWidth * 0.06) nodes[i].classList.add("revealed"); }
 
@@ -4567,7 +4801,7 @@
       // 2. Screen reaches full dark zone right as horizontal scroll begins (rect.top <= 0).
       // 3. Screen stays dark throughout horizontal travel across nodes.
       // 4. Once Mandapam is reached (p >= JOURNEY_TRAVEL_END), screen smoothly re-brightens during the scroll pause.
-      var vh = innerHeight, ph;
+      var ph;
       if (rect.top > 0) {
         var approach = Math.min(1, Math.max(0, (vh * 0.65 - rect.top) / (vh * 0.65)));
         ph = approach * 0.25; // 0.0 -> 0.25 before pin (darkening completes right as pin hits)
@@ -4619,6 +4853,24 @@
 
     /* --- "The Convergence Countdown": two beams close on one bright point --- */
     var convProgress = Math.min(1, Math.max(0, 1 - daysLeft / PLAN_WINDOW));
+
+    /* How far apart the two beams sit: 0.94 = out at their starts, 0 = met.
+       Days left is not something the eye should read linearly. Spread evenly
+       over a year, the beams are already all but touching a month out and there
+       is nothing left to watch in the weeks that matter. This curve holds them
+       clearly apart through the long middle and spends most of its travel on the
+       run-in — a month out they are still better than half apart, and they only
+       close to a hair in the final day or two.
+
+       APPROACH_DAYS is the single dial: it is roughly the point where the beams
+       are half closed. Lower it and they hold apart longer and rush in later;
+       raise it and the approach starts earlier and is gentler. */
+    var APPROACH_DAYS = 19;
+    function beamGap(days) {
+      if (days <= 0) return 0;
+      var norm = (PLAN_WINDOW + APPROACH_DAYS) / PLAN_WINDOW;   // a full window still reads 0.94
+      return Math.min(0.94, 0.94 * (days / (days + APPROACH_DAYS)) * norm);
+    }
     var convCanvas = document.getElementById("convWave"), cvx = convCanvas.getContext("2d");
     setTimeout(function () { document.getElementById("ccProg").style.width = (convProgress * 100).toFixed(1) + "%"; }, 400);
     function sizeConv() { var r = convCanvas.getBoundingClientRect(); convCanvas.width = Math.max(1, Math.floor(r.width * DPR)); convCanvas.height = Math.max(1, Math.floor(r.height * DPR)); }
@@ -4638,19 +4890,13 @@
       cvx.clearRect(0, 0, W, H);
       cvx.strokeStyle = "rgba(236,230,218,.07)"; cvx.lineWidth = 1 * DPR;
       cvx.beginPath(); cvx.moveTo(0, mid); cvx.lineTo(W, mid); cvx.stroke();
-      // Gap = normalised distance from the central bright point. 1 = out at the start of the line,
-      // 0 = fully converged. Beams sit at the outer starts for the whole plan window and only
-      // slide inward in the final day — reaching the centre exactly at daysLeft = 0.
-      var gap;
-      if (daysLeft <= 0) {
-        gap = 0;
-      } else if (daysLeft > 1) {
-        gap = 0.94;
-      } else {
-        // daysLeft in (0, 1] — smooth approach from centre outward as time runs down.
-        gap = 0.94 * daysLeft;
-      }
-      gap = Math.max(0, Math.min(1, gap + 0.015 * Math.sin(t * 1.2)));
+      // Gap = normalised distance from the central bright point. The beams move every day and
+      // reach the centre on the day itself; see beamGap for the shape of the approach.
+      var gap = beamGap(daysLeft);
+      // The beams breathe, but by a fraction of the gap that is left rather than a fixed amount —
+      // otherwise in the last weeks the wobble is wider than the gap and the two heads swap sides
+      // through the bright point. On the day the gap is 0, so they come to rest dead centre.
+      gap = Math.max(0, gap + Math.min(0.015, gap * 0.12) * Math.sin(t * 1.2));
       var xg = cx - gap * half, xw = cx + gap * half;
       convTrail(0, xg, mid, "234,197,108");
       convTrail(W, xw, mid, "232,93,117");
@@ -5142,12 +5388,19 @@
     }
 
     /* The note under the input doubles as the status line. */
+    var songSend = document.getElementById("songSend");
     var noteTimer = 0;
     function note(msg, warn) {
       clearTimeout(noteTimer);
-      djNote.textContent = msg || (NOTE_BASE + "  ·  Your picks: " + myClaims.length + " / " + MAX_PICKS);
+      var spent = myClaims.length >= MAX_PICKS;
+      djNote.textContent = msg || ((spent ? "Both picks used — remove one to drop another." : NOTE_BASE)
+        + "  ·  Your picks: " + myClaims.length + " / " + MAX_PICKS);
       djNote.classList.toggle("warn", !!warn);
       if (msg) noteTimer = setTimeout(function () { note(); }, 4600);
+      /* Only the button is switched off. The input stays live so the signal
+         trace keeps drawing as they type, and the hex wall is untouched. */
+      songSend.disabled = spent;
+      songSend.title = spent ? "Both of your picks are used" : "";
     }
     var WALL_ERRORS = {
       claim_limit: "That is both of your picks — free one up by tapping a song you have highlighted.",
@@ -5163,6 +5416,32 @@
       note(key ? WALL_ERRORS[key] : "Could not reach the wall — check your connection and try again.", true);
     }
 
+    /* What the list shows. The wall can run long, so by default it is the ten
+       songs the floor most wants — plus, carried up to the top, any pick of
+       yours that has slipped below them, because a guest has to be able to find
+       their own two. A pinned row keeps its real standing beside it, and its dot
+       still comes from that real position: where a row sits in this view never
+       changes its colour. */
+    var TOP_N = 10, queueExpanded = false;
+    var moreBtn = document.getElementById("queueMore");
+
+    function visibleRows() {
+      var rows = songs.map(function (s, i) { return { song: s, rank: i, pinned: false }; });
+      if (queueExpanded || rows.length <= TOP_N) return rows;
+      var mine = rows.slice(TOP_N).filter(function (r) { return claimFor(r.song.id); });
+      mine.forEach(function (r) { r.pinned = true; });
+      return mine.concat(rows.slice(0, TOP_N));
+    }
+
+    function syncMore() {
+      if (songs.length <= TOP_N) { moreBtn.hidden = true; queueExpanded = false; }
+      else {
+        moreBtn.hidden = false;
+        moreBtn.textContent = queueExpanded ? "Show fewer" : ("View all " + songs.length + " songs");
+      }
+      queueEl.classList.toggle("expanded", queueExpanded);
+    }
+
     function renderQueue() {
       queueEl.innerHTML = "";
       if (!songs.length) {
@@ -5171,13 +5450,16 @@
         li.textContent = wallLoaded ? "No signals yet — be the first drop." : "Tuning in…";
         queueEl.appendChild(li);
         drawnIds = [];
+        syncMore();
         return;
       }
-      songs.forEach(function (s, i) {
+      var shown = visibleRows();
+      shown.forEach(function (r) {
+        var s = r.song;
         var claim = claimFor(s.id), slot = slotOf(s.id), own = claim && claim.kind === "new";
         var row = document.createElement("li");
         row.className = "q-row" + (slot ? " mine slot-" + slot : "") + (own ? " own" : "")
-          + (drawnIds.indexOf(s.id) < 0 ? " fresh" : "");
+          + (r.pinned ? " pinned" : "") + (drawnIds.indexOf(s.id) < 0 ? " fresh" : "");
         row.setAttribute("data-id", s.id);
         if (slot) {
           var sh = (slot === 1) ? DROP_GOLD : DROP_RED;      // your 1st pick gold, 2nd red
@@ -5188,14 +5470,24 @@
           ? (own ? "Your drop — remove it with ×" : "Tap to take your weight back off")
           : (myClaims.length >= MAX_PICKS ? "Both of your picks are used" : "Tap to add your weight to this song");
         row.innerHTML =
-          '<span class="grv" style="background:' + hslWith(dotHue(i), 68, 58, 1) + '"></span>' +
+          '<span class="grv" style="background:' + hslWith(dotHue(r.rank), 68, 58, 1) + '"></span>' +
+          (r.pinned ? '<span class="q-rank">#' + (r.rank + 1) + '</span>' : '') +
           '<span class="q-name">' + escapeHTML(s.name) + '</span>' +
           (s.count > 1 ? '<span class="q-count">&times;' + s.count + '</span>' : '') +
           (own ? '<button class="q-del" type="button" aria-label="Remove ' + escapeHTML(s.name) + '">&times;</button>' : '');
         queueEl.appendChild(row);
       });
-      drawnIds = songs.map(function (s) { return s.id; });
+      /* Only what was actually drawn counts as seen, so a row that arrives when
+         the list is opened out still rises into place rather than appearing. */
+      drawnIds = shown.map(function (r) { return r.song.id; });
+      syncMore();
     }
+
+    moreBtn.addEventListener("click", function () {
+      queueExpanded = !queueExpanded;
+      renderQueue();
+      if (!queueExpanded) queueEl.scrollTop = 0;
+    });
 
     /* Fold a fresh read of the wall into the page. Anything that appeared
        since the last read was dropped by somebody else, so the wall flashes
@@ -5291,7 +5583,7 @@
         });
       });
     }
-    document.getElementById("songSend").addEventListener("click", dropSong);
+    songSend.addEventListener("click", dropSong);
     songInput.addEventListener("keydown", function (e) { if (e.key === "Enter") dropSong(); });
 
     /* Tapping a row. Underneath, every one of these is the same single
