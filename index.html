@@ -1671,14 +1671,18 @@
     display: block;
     position: relative;
     z-index: 3;
-    filter: drop-shadow(0 0 12px rgba(234, 197, 108, .15));
   }
 
+  /* Lighting model ported from the draft's dance floor: a pad rests NEUTRAL (a barely-there
+     white, no colour at all), then pulses to a flat true-colour fill at ~60% alpha with a
+     bright rim (the SVG stand-in for the floor's `inset` glow) and one soft outer bloom.
+     Colour is never blown out to white, and unlit pads stay dark — that contrast is what
+     makes it read as real light rather than painted tiles. Per-hex RGB triplet = --ic. */
   #hexWall polygon.hex {
-    fill: var(--idle-base, rgba(255, 255, 255, .06));
-    stroke: rgba(255, 255, 255, .14);
-    stroke-width: .8;
-    transition: fill .5s ease, stroke .5s ease, filter .5s ease;
+    fill: rgba(255, 255, 255, .045);
+    stroke: rgba(255, 255, 255, .06);
+    stroke-width: 1.2;
+    transition: fill .45s ease, stroke .45s ease, filter .45s ease;
     transform-box: fill-box;
     transform-origin: center;
   }
@@ -1689,30 +1693,32 @@
   }
 
   #hexWall polygon.hex.lit {
-    fill: var(--c, rgba(234, 197, 108, .5));
-    stroke: var(--c-strong, rgba(234, 197, 108, .8));
-    filter: drop-shadow(0 0 10px var(--c-strong, rgba(234, 197, 108, .8)));
+    fill: var(--c, rgba(240, 194, 75, .68));
+    stroke: var(--c-strong, rgba(240, 194, 75, .95));
+    filter: drop-shadow(0 0 9px var(--c-strong, rgba(240, 194, 75, .7)));
     animation: hexLit 1.4s ease-out;
   }
 
-  /* Idle animation cycles each hex through its own themed colour (set per-hex in JS via --idle-c)
-     rather than only white/cream, so the wall reads as coloured DJ lights, not grey blinkers. */
   @keyframes hexIdle {
 
     0%,
     100% {
-      fill: var(--idle-base, rgba(255, 255, 255, .04));
+      fill: rgba(255, 255, 255, .045);
+      stroke: rgba(255, 255, 255, .06);
+      filter: drop-shadow(0 0 0 transparent);
     }
 
     50% {
-      fill: var(--idle-c, rgba(234, 197, 108, .22));
+      fill: rgba(var(--ic), .6);
+      stroke: rgba(var(--ic), .92);
+      filter: drop-shadow(0 0 7px rgba(var(--ic), .66));
     }
   }
 
   @keyframes hexLit {
     0% {
-      transform: scale(1.35);
-      filter: drop-shadow(0 0 26px var(--c-strong, #EAC56C));
+      transform: scale(1.16);
+      filter: drop-shadow(0 0 15px var(--c-strong, #EAC56C));
     }
 
     100% {
@@ -4532,6 +4538,9 @@
     }
     (function buildHexWall() {
       if (!hexWall) return;
+      // The draft dance floor's three lamp colours — gold, cream-gold, wine — weighted warm
+      // like the reference so the wall stays in the site's palette instead of going rainbow.
+      var HEX_IC = ["240,194,75", "240,194,75", "235,190,130", "235,190,130", "194,58,91", "240,194,75", "235,190,130", "194,58,91"];
       var startY = (HEX_VB_H - (HEX_ROWS - 1) * HEX_H) / 2;
       for (var row = 0; row < HEX_ROWS; row++) {
         var cols = (row % 2) ? HEX_COLS_ODD : HEX_COLS_EVEN;
@@ -4546,11 +4555,7 @@
           poly.setAttribute("class", "hex idle");
           poly.style.setProperty("--d", (Math.random() * 4).toFixed(2) + "s");
           poly.style.setProperty("--dur", (3.5 + Math.random() * 3).toFixed(2) + "s");
-          // Themed idle colour per hex — gold, halo cream, wine, amber, violet, rose.
-          var HEX_IDLE_HUES = [42, 38, 348, 28, 275, 45, 320, 260, 38];
-          var h = HEX_IDLE_HUES[Math.floor(Math.random() * HEX_IDLE_HUES.length)];
-          poly.style.setProperty("--idle-c", "hsla(" + h + ", 82%, 64%, .35)");
-          poly.style.setProperty("--idle-base", "hsla(" + h + ", 50%, 60%, .08)");
+          poly.style.setProperty("--ic", HEX_IC[Math.floor(Math.random() * HEX_IC.length)]);
           poly.dataset.cx = cx; poly.dataset.cy = cy;
           hexWall.appendChild(poly);
           hexCells.push(poly);
@@ -4622,7 +4627,7 @@
 
     /* Idle sparkle — occasionally light a random hex in warm palette */
     /* Themed sparkle palette — gold, halo cream, wine, violet, amber (matches site accents) */
-    var idleHues = [42, 38, 348, 28, 275, 45, 320, 42, 38, 320, 260];
+    var idleHues = [44, 44, 38, 344, 44, 38, 344, 34];
     function idleSparkle() {
       if (!hexCells.length || waveActive) return;
       var idx = Math.floor(Math.random() * hexCells.length);
