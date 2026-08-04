@@ -1,0 +1,11 @@
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Local backups & drafts (not part of the published site)
+index_*.html
+index-draft.html
+
+# Local Claude Code tooling config
+.claude/
