@@ -1578,29 +1578,118 @@
     text-align: center;
   }
 
-  .hex-wall-frame {
+  /* An actual room, not a tilted board: the hex lights sit on the BACK WALL, and a
+     floor, ceiling and two side walls recede toward it. Every face is a real
+     3D-transformed plane, so the convergence is geometric — and each surface is shaded
+     bright where it meets the lit wall, falling to black at the front opening, which is
+     what reads as depth. --depth controls how deep the room is. */
+  .hex-room-outer {
     position: relative;
     margin: 0 auto;
     width: 100%;
-    max-width: 380px;
-    padding: 20px 16px 26px;
-    border-radius: 18px;
-    /* Themed midnight-plum: brighter than pure black, with warm gold + wine + violet hotspots.
-       An animated overlay adds subtle colour-changing lights. */
-    background:
-      radial-gradient(120% 100% at 20% 15%, rgba(234, 197, 108, .22), transparent 55%),
-      radial-gradient(100% 100% at 82% 88%, rgba(151, 70, 91, .32), transparent 55%),
-      radial-gradient(95% 95% at 50% 50%, rgba(122, 80, 190, .28), transparent 62%),
-      linear-gradient(180deg, #3B2255 0%, #2B1740 45%, #1D1130 100%);
-    border: 1px solid rgba(234, 197, 108, .3);
-    box-shadow:
-      inset 0 0 60px rgba(0, 0, 0, .35),
-      inset 0 1px 0 rgba(255, 255, 255, .12),
-      0 30px 80px -30px rgba(0, 0, 0, .85),
-      0 0 80px -30px rgba(234, 197, 108, .35),
-      0 0 80px -30px rgba(151, 70, 91, .28);
+    /* wider than the old flat card so the inset back wall still shows the hexes full-size */
+    max-width: 470px;
+    aspect-ratio: 3 / 2;
+    border-radius: 16px;
     overflow: hidden;
+    background: #08040F;
+    box-shadow:
+      0 40px 90px -30px rgba(0, 0, 0, .95),
+      0 0 0 1px rgba(240, 194, 75, .16),
+      0 0 70px -28px rgba(194, 58, 91, .5),
+      0 0 70px -30px rgba(240, 194, 75, .35);
+  }
+
+  /* True one-point perspective. The back wall is a smaller centred rectangle inset by
+     --wx / --wy; the four surfaces are trapezoids running from the full-size front opening
+     back to that wall's edges. Every vanishing line therefore meets at the wall, exactly
+     like a real room — and unlike rotated planes it can't be flattened or mis-sorted. */
+  .hex-room {
+    --wx: 15%;
+    /* how far in the back wall sits, horizontally */
+    --wy: 17%;
+    /* …and vertically */
+    position: absolute;
+    inset: 0;
+  }
+
+  .room-face {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* FLOOR — widest at the bottom of the frame (nearest), narrowing up to the wall's foot.
+     Brightest along that back edge, falling to black at the front. */
+  .room-floor {
+    clip-path: polygon(0% 100%, 100% 100%, calc(100% - var(--wx)) calc(100% - var(--wy)), var(--wx) calc(100% - var(--wy)));
+    background:
+      /* pool of light thrown forward onto the floor by the lit wall */
+      radial-gradient(34% 62% at 50% calc(100% - var(--wy)), rgba(255, 208, 130, .50), transparent 70%),
+      radial-gradient(62% 85% at 50% calc(100% - var(--wy)), rgba(226, 96, 130, .34), transparent 74%),
+      radial-gradient(100% 110% at 50% calc(100% - var(--wy)), rgba(150, 80, 200, .22), transparent 78%),
+      linear-gradient(180deg, #4E2B68 calc(100% - var(--wy)), #0A0614 100%);
+  }
+
+  /* CEILING — mirrored, and deliberately darker: light falls downward, and that
+     top/bottom asymmetry is a big part of what makes the box read as lit. */
+  .room-ceiling {
+    clip-path: polygon(0% 0%, 100% 0%, calc(100% - var(--wx)) var(--wy), var(--wx) var(--wy));
+    background:
+      radial-gradient(40% 70% at 50% var(--wy), rgba(150, 88, 214, .24), transparent 72%),
+      linear-gradient(180deg, #05020A 0%, #241436 var(--wy));
+  }
+
+  /* SIDE WALLS — gold spill on the left, wine on the right, matching the wall's own glow. */
+  .room-left {
+    clip-path: polygon(0% 0%, var(--wx) var(--wy), var(--wx) calc(100% - var(--wy)), 0% 100%);
+    background:
+      radial-gradient(70% 58% at var(--wx) 50%, rgba(240, 194, 75, .30), transparent 74%),
+      linear-gradient(90deg, #08040F 0%, #3A2154 var(--wx));
+  }
+
+  .room-right {
+    clip-path: polygon(100% 0%, 100% 100%, calc(100% - var(--wx)) calc(100% - var(--wy)), calc(100% - var(--wx)) var(--wy));
+    background:
+      radial-gradient(70% 58% at calc(100% - var(--wx)) 50%, rgba(194, 58, 91, .32), transparent 74%),
+      linear-gradient(90deg, #3A2154 calc(100% - var(--wx)), #08040F 100%);
+  }
+
+  /* The back wall. Painted last, so its outer glow spills onto the surrounding surfaces —
+     that bleed is what lights the seams where floor, ceiling and walls meet it. */
+  .hex-wall-frame {
+    position: absolute;
+    left: var(--wx);
+    right: var(--wx);
+    top: var(--wy);
+    bottom: var(--wy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px;
+    background:
+      radial-gradient(120% 100% at 20% 15%, rgba(240, 194, 75, .20), transparent 55%),
+      radial-gradient(100% 100% at 82% 88%, rgba(194, 58, 91, .30), transparent 55%),
+      radial-gradient(95% 95% at 50% 50%, rgba(148, 72, 215, .25), transparent 62%),
+      linear-gradient(180deg, #3B2255 0%, #2B1740 45%, #1D1130 100%);
+    box-shadow:
+      inset 0 0 60px rgba(0, 0, 0, .45),
+      0 0 26px 2px rgba(240, 194, 75, .30),
+      0 0 60px 14px rgba(194, 58, 91, .22),
+      0 0 110px 30px rgba(148, 72, 215, .14);
     isolation: isolate;
+  }
+
+  /* Ambient occlusion in the corners + a vignette on the opening — sells the enclosure. */
+  .room-ao {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 100% at 50% 44%, transparent 58%, rgba(0, 0, 0, .42) 100%),
+      linear-gradient(180deg, rgba(0, 0, 0, .34) 0%, transparent 12%, transparent 88%, rgba(0, 0, 0, .30) 100%),
+      linear-gradient(90deg, rgba(0, 0, 0, .32) 0%, transparent 10%, transparent 90%, rgba(0, 0, 0, .32) 100%);
   }
 
   /* Colour-changing wall lights — a soft aurora that cycles gold → wine → violet */
@@ -1611,9 +1700,9 @@
     z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(30% 40% at 30% 30%, rgba(234, 197, 108, .55), transparent 65%),
-      radial-gradient(30% 40% at 70% 70%, rgba(151, 70, 91, .55), transparent 65%),
-      radial-gradient(30% 40% at 50% 20%, rgba(150, 100, 220, .45), transparent 65%);
+      radial-gradient(30% 40% at 30% 30%, rgba(240, 194, 75, .55), transparent 65%),
+      radial-gradient(30% 40% at 70% 70%, rgba(194, 58, 91, .55), transparent 65%),
+      radial-gradient(30% 40% at 50% 20%, rgba(148, 72, 215, .45), transparent 65%);
     filter: blur(30px);
     mix-blend-mode: screen;
     opacity: .7;
@@ -1646,23 +1735,9 @@
     left: 8px;
     right: 8px;
     border-radius: 12px;
-    border: 1px solid rgba(234, 197, 108, .12);
+    border: 1px solid rgba(232, 191, 83, .15);
     pointer-events: none;
     z-index: 1;
-  }
-
-  .hex-wall-strip {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 26px;
-    background:
-      linear-gradient(180deg, transparent, rgba(0, 0, 0, .55)),
-      repeating-linear-gradient(90deg, rgba(234, 197, 108, .4) 0 4px, transparent 4px 12px);
-    pointer-events: none;
-    opacity: .45;
-    z-index: 2;
   }
 
   #hexWall {
@@ -1673,56 +1748,108 @@
     z-index: 3;
   }
 
-  /* Lighting model ported from the draft's dance floor: a pad rests NEUTRAL (a barely-there
-     white, no colour at all), then pulses to a flat true-colour fill at ~60% alpha with a
-     bright rim (the SVG stand-in for the floor's `inset` glow) and one soft outer bloom.
-     Colour is never blown out to white, and unlit pads stay dark — that contrast is what
-     makes it read as real light rather than painted tiles. Per-hex RGB triplet = --ic. */
+  /* Lighting model ported from the draft's dance floor: each tile features an SVG radial gradient
+     where the center is translucent (~38% opacity) showing the deep midnight backdrop underneath,
+     while the edges fade into a vivid glowing inset rim (~95% opacity) + intense outer bloom.
+     Transitions & keyframes animate center-outward glow expansion on fade-in, and center-inward collapse on fade-out. */
+  /* Minimal 3D detailing: a dark body sitting just behind/below each light gives the tile a
+     little thickness, and a static bevel rim catches light on its top edge. The rim does NOT
+     pulse with the light — it reads as the fixed housing the light glows inside of. */
+  #hexWall .hex-body {
+    /* deep plum rather than black, and only half-opaque — enough to read as a shadowed
+       edge under each tile without turning the unlit hexes into solid dark blobs */
+    fill: #170C26;
+    fill-opacity: .5;
+  }
+
+  #hexWall .hex-bevel {
+    fill: none;
+    stroke: url(#hexBevel);
+    stroke-width: 1;
+    opacity: .5;
+    pointer-events: none;
+  }
+
   #hexWall polygon.hex {
-    fill: rgba(255, 255, 255, .045);
+    fill: rgba(255, 255, 255, .035);
     stroke: rgba(255, 255, 255, .06);
-    stroke-width: 1.2;
-    transition: fill .45s ease, stroke .45s ease, filter .45s ease;
+    stroke-width: 1.1;
+    transform: scale(0.96);
+    transition: fill 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke-width 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     transform-box: fill-box;
     transform-origin: center;
   }
 
   #hexWall polygon.hex.idle {
-    animation: hexIdle var(--dur, 4s) ease-in-out infinite;
+    animation: hexIdle var(--dur, 4.4s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
     animation-delay: var(--d, 0s);
   }
 
   #hexWall polygon.hex.lit {
-    fill: var(--c, rgba(240, 194, 75, .68));
-    stroke: var(--c-strong, rgba(240, 194, 75, .95));
-    filter: drop-shadow(0 0 9px var(--c-strong, rgba(240, 194, 75, .7)));
-    animation: hexLit 1.4s ease-out;
+    fill: var(--grad-url, var(--c, rgba(230, 192, 90, .58)));
+    stroke: var(--c-strong, rgba(230, 192, 90, .96));
+    stroke-width: 1.6;
+    filter: drop-shadow(0 0 4px var(--c-strong, rgba(230, 192, 90, .92))) drop-shadow(0 0 16px var(--c-strong, rgba(230, 192, 90, .70)));
+    animation: hexLit 1.8s ease-out;
   }
 
   @keyframes hexIdle {
 
     0%,
     100% {
-      fill: rgba(255, 255, 255, .045);
+      /* Unlit: dark neutral, resting slightly scaled down at center */
+      fill: rgba(255, 255, 255, .035);
       stroke: rgba(255, 255, 255, .06);
+      stroke-width: 1.1;
       filter: drop-shadow(0 0 0 transparent);
+      transform: scale(0.96);
     }
 
-    50% {
-      fill: rgba(var(--ic), .6);
-      stroke: rgba(var(--ic), .92);
-      filter: drop-shadow(0 0 7px rgba(var(--ic), .66));
+    30% {
+      /* Fade in: glow nucleus lights up at center and expands outward */
+      fill: var(--grad-url, rgba(var(--ic), .22));
+      stroke: rgba(var(--ic), .35);
+      stroke-width: 1.2;
+      filter: drop-shadow(0 0 2px rgba(var(--ic), .40));
+      transform: scale(0.98);
+    }
+
+    45%,
+    56% {
+      /* Peak glow: radial light covers full tile boundaries with glowing rim */
+      fill: var(--grad-url, rgba(var(--ic), .50));
+      stroke: rgba(var(--ic), .95);
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 3px rgba(var(--ic), .88)) drop-shadow(0 0 16px rgba(var(--ic), .66));
+      /* stays at 1.0 — any larger and the lit face swallows the body behind it,
+         which is what made the tiles look flat while glowing */
+      transform: scale(1);
+    }
+
+    70% {
+      /* Fade out: outer glow collapses back inward toward center nucleus. Ending at 70%
+         leaves a long dark tail (70->100%) so each tile rests off noticeably longer after
+         its glow — which also means more of the wall is unlit at any given instant. */
+      fill: var(--grad-url, rgba(var(--ic), .22));
+      stroke: rgba(var(--ic), .35);
+      stroke-width: 1.2;
+      filter: drop-shadow(0 0 2px rgba(var(--ic), .40));
+      transform: scale(0.98);
     }
   }
 
   @keyframes hexLit {
     0% {
-      transform: scale(1.16);
-      filter: drop-shadow(0 0 15px var(--c-strong, #EAC56C));
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 5px var(--c-strong, #E6C05A)) drop-shadow(0 0 20px var(--c-strong, #E6C05A));
     }
 
     100% {
-      transform: scale(1);
+      transform: scale(0.96);
     }
   }
 
@@ -2611,9 +2738,17 @@
           <div class="dj-note">Saved on this device only — no accounts, no forms. Your drop stays on your wall.</div>
         </div>
         <div class="hex-wall" data-cursor="light">
-          <div class="hex-wall-frame">
-            <svg id="hexWall" viewBox="0 0 340 220" aria-hidden="true"></svg>
-            <div class="hex-wall-strip"></div>
+          <div class="hex-room-outer">
+            <div class="hex-room">
+              <div class="room-face room-ceiling"></div>
+              <div class="room-face room-floor"></div>
+              <div class="room-face room-side room-left"></div>
+              <div class="room-face room-side room-right"></div>
+              <div class="hex-wall-frame">
+                <svg id="hexWall" viewBox="0 0 340 220" aria-hidden="true"></svg>
+              </div>
+            </div>
+            <div class="room-ao" aria-hidden="true"></div>
           </div>
           <div class="hex-hint">✦ each drop lights a hex</div>
           <ul class="queue" id="queue"></ul>
@@ -4504,6 +4639,16 @@
     var scopeCanvas = document.getElementById("scope-canvas"), sctx = scopeCanvas.getContext("2d");
     var songInput = document.getElementById("songInput"), STORE = "phaselock.djqueue.v1", queue = [];
     try { queue = JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { queue = []; }
+    // Drops alternate between exactly two themed colours: golden yellow, then red.
+    var DROP_GOLD = 44, DROP_RED = 350;
+    // Recolour anything saved before the two-colour scheme so the whole list alternates.
+    // Walk backwards from the newest entry, keeping its colour when it is already one of the
+    // two, so a reload never changes which colour the next drop gets.
+    (function normaliseQueueColours() {
+      var n = queue.length; if (!n) return;
+      var h = (queue[n - 1].hue === DROP_RED) ? DROP_RED : DROP_GOLD;
+      for (var i = n - 1; i >= 0; i--) { queue[i].hue = h; h = (h === DROP_GOLD) ? DROP_RED : DROP_GOLD; }
+    })();
     function sizeScope() { var r = scopeCanvas.getBoundingClientRect(); scopeCanvas.width = r.width * DPR; scopeCanvas.height = r.height * DPR; }
     var amps = [], BARS = 64;
     function buildAmps(s) { amps = []; if (!s) return; for (var i = 0; i < BARS; i++) { var cc = s.charCodeAt(i % s.length) || 0; var base = ((cc * 13 + i * 7) % 100) / 100; var env = Math.sin((i / BARS) * Math.PI); amps.push(0.15 + base * 0.85 * (0.4 + 0.6 * env)); } }
@@ -4538,9 +4683,109 @@
     }
     (function buildHexWall() {
       if (!hexWall) return;
-      // The draft dance floor's three lamp colours — gold, cream-gold, wine — weighted warm
-      // like the reference so the wall stays in the site's palette instead of going rainbow.
-      var HEX_IC = ["240,194,75", "240,194,75", "235,190,130", "235,190,130", "194,58,91", "240,194,75", "235,190,130", "194,58,91"];
+
+      // Colour groups. `base` is the relative chance of a tile picking that group, so
+      // yellow > red >> purple. Each group carries two shades for variety.
+      var HEX_GROUPS = [
+        { name: "yellow", base: 45, shades: ["230,192,90", "225,190,142"] },   // gold, cream gold
+        { name: "red", base: 38, shades: ["180,70,97", "197,56,83"] },         // wine, crimson
+        { name: "purple", base: 15, shades: ["198,52,168", "216,84,190"] }     // magenta-purple (#C634A8 / #D854BE)
+      ];
+      var gradIdFor = {};
+      HEX_GROUPS.forEach(function (g, gi) {
+        g.shades.forEach(function (rgb, si) { gradIdFor[rgb] = "hexGrad-" + gi + "-" + si; });
+      });
+
+      // Build SVG radial gradients inside <defs> for true inset tile edge glow & translucent center
+      var defs = document.createElementNS(SVGNS, "defs");
+      Object.keys(gradIdFor).forEach(function (rgb) {
+        var gradId = gradIdFor[rgb];
+        var radGrad = document.createElementNS(SVGNS, "radialGradient");
+        radGrad.setAttribute("id", gradId);
+        radGrad.setAttribute("cx", "50%");
+        radGrad.setAttribute("cy", "50%");
+        radGrad.setAttribute("r", "52%");
+
+        // 0%: Translucent center showing deep backdrop
+        var s1 = document.createElementNS(SVGNS, "stop");
+        s1.setAttribute("offset", "0%");
+        s1.setAttribute("stop-color", "rgba(" + rgb + ", 0.38)");
+
+        // 60%: Mid fill transition
+        var s2 = document.createElementNS(SVGNS, "stop");
+        s2.setAttribute("offset", "60%");
+        s2.setAttribute("stop-color", "rgba(" + rgb + ", 0.65)");
+
+        // 88%: Inset rim glow (intense brightness around border perimeter)
+        var s3 = document.createElementNS(SVGNS, "stop");
+        s3.setAttribute("offset", "88%");
+        s3.setAttribute("stop-color", "rgba(" + rgb + ", 0.95)");
+
+        // 100%: Vivid outer border edge
+        var s4 = document.createElementNS(SVGNS, "stop");
+        s4.setAttribute("offset", "100%");
+        s4.setAttribute("stop-color", "rgba(" + rgb + ", 0.98)");
+
+        radGrad.appendChild(s1);
+        radGrad.appendChild(s2);
+        radGrad.appendChild(s3);
+        radGrad.appendChild(s4);
+        defs.appendChild(radGrad);
+      });
+
+      // Bevel gradient for the tile rim: a light catch along the top edge fading to a dark
+      // underside — the minimal emboss that gives each tile a bit of physical thickness.
+      var bevel = document.createElementNS(SVGNS, "linearGradient");
+      bevel.setAttribute("id", "hexBevel");
+      bevel.setAttribute("x1", "0"); bevel.setAttribute("y1", "0");
+      bevel.setAttribute("x2", "0"); bevel.setAttribute("y2", "1");
+      [["0%", "#FFFFFF", ".34"], ["46%", "#FFFFFF", ".04"], ["100%", "#000000", ".42"]]
+        .forEach(function (s) {
+          var st = document.createElementNS(SVGNS, "stop");
+          st.setAttribute("offset", s[0]); st.setAttribute("stop-color", s[1]); st.setAttribute("stop-opacity", s[2]);
+          bevel.appendChild(st);
+        });
+      defs.appendChild(bevel);
+      hexWall.appendChild(defs);
+
+      // Three stacked layers so painting order is global, not per-cell: every tile BODY sits
+      // behind every light (otherwise a neighbour's dark body would clip the glow spilling
+      // out of the tile next to it), and the bevel rims sit on top of everything.
+      var gBody = document.createElementNS(SVGNS, "g");
+      var gLight = document.createElementNS(SVGNS, "g");
+      var gBevel = document.createElementNS(SVGNS, "g");
+      gBevel.setAttribute("class", "hex-bevel-layer");
+      hexWall.appendChild(gBody); hexWall.appendChild(gLight); hexWall.appendChild(gBevel);
+
+      /* A tile no longer owns a colour for life — it draws a fresh one each time it finishes
+         a pulse (see the animationiteration hook below).
+
+         The draw uses a shuffled BAG rather than weighted odds with a corrective term. A bag
+         is filled with the colour mix in proportion, shuffled, and dealt from one at a time;
+         when it runs dry it is refilled and reshuffled. This is the standard fix for exactly
+         the problem a feedback controller creates: nudging weights by "how far off target am
+         I" always overshoots, so red floods, then the correction makes yellow flood. A bag
+         has no feedback at all — it simply cannot deal more of a colour than it holds, so the
+         mix stays right on its own while any individual draw is still genuinely random.
+         Droughts and floods are both impossible; runs of two still happen, which is what
+         makes it read as natural rather than metered out. */
+      var BAG_MIX = [{ g: 0, n: 14 }, { g: 1, n: 12 }, { g: 2, n: 5 }];  // yellow, red, purple
+      var bag = [];
+      function refillBag() {
+        bag = [];
+        BAG_MIX.forEach(function (m) { for (var i = 0; i < m.n; i++) bag.push(HEX_GROUPS[m.g]); });
+        for (var i = bag.length - 1; i > 0; i--) {          // Fisher-Yates
+          var j = (Math.random() * (i + 1)) | 0, t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+        }
+      }
+
+      function assignColour(poly) {
+        if (!bag.length) refillBag();
+        var g = bag.pop();
+        var rgb = g.shades[(Math.random() * g.shades.length) | 0];
+        poly.style.setProperty("--ic", rgb);
+        poly.style.setProperty("--grad-url", "url(#" + gradIdFor[rgb] + ")");
+      }
       var startY = (HEX_VB_H - (HEX_ROWS - 1) * HEX_H) / 2;
       for (var row = 0; row < HEX_ROWS; row++) {
         var cols = (row % 2) ? HEX_COLS_ODD : HEX_COLS_EVEN;
@@ -4550,15 +4795,37 @@
         for (var col = 0; col < cols; col++) {
           var cx = startX + col * HEX_W;
           var cy = startY + row * HEX_H;
+          // Tile body: same hex, a touch larger and nudged down, in near-black. It peeks out
+          // below the lit face as a thin dark edge — the "depth behind the light".
+          var body = document.createElementNS(SVGNS, "polygon");
+          // Barely wider than the face but pushed further down, so even at full glow
+          // (face scale 1.0) a sliver of body still shows below — depth while lit.
+          body.setAttribute("points", hexPoints(cx, cy + 2.1, HEX_R + 0.25));
+          body.setAttribute("class", "hex-body");
+          gBody.appendChild(body);
+
           var poly = document.createElementNS(SVGNS, "polygon");
           poly.setAttribute("points", hexPoints(cx, cy, HEX_R));
           poly.setAttribute("class", "hex idle");
+          // Random but in a tight band, with the floor raised so no tile rushes its glow.
           poly.style.setProperty("--d", (Math.random() * 4).toFixed(2) + "s");
-          poly.style.setProperty("--dur", (3.5 + Math.random() * 3).toFixed(2) + "s");
-          poly.style.setProperty("--ic", HEX_IC[Math.floor(Math.random() * HEX_IC.length)]);
+          poly.style.setProperty("--dur", (3.6 + Math.random() * 1.2).toFixed(2) + "s");
+          assignColour(poly);
+          // Re-draw a colour at the END of each pulse — the tile is dark at that instant,
+          // so the swap is invisible and the hex simply returns as a different colour.
+          // Skipped while a drop has the cell lit, so a wave/sparkle never changes mid-flash.
+          poly.addEventListener("animationiteration", function (e) {
+            if (!e.target.classList.contains("lit")) assignColour(e.target);
+          });
           poly.dataset.cx = cx; poly.dataset.cy = cy;
-          hexWall.appendChild(poly);
+          gLight.appendChild(poly);
           hexCells.push(poly);
+
+          // Static bevel rim — keeps each tile readable as an object even while it is unlit.
+          var bev = document.createElementNS(SVGNS, "polygon");
+          bev.setAttribute("points", hexPoints(cx, cy, HEX_R));
+          bev.setAttribute("class", "hex-bevel");
+          gBevel.appendChild(bev);
         }
       }
     })();
@@ -4567,13 +4834,14 @@
     function escapeHTML(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
     function litHex(cellIndex, hue, autoReset) {
       var cell = hexCells[cellIndex]; if (!cell) return;
-      cell.style.setProperty("--c", hslWith(hue, 84, 62, .65));
-      cell.style.setProperty("--c-strong", hslWith(hue, 88, 70, .98));
+      cell.style.setProperty("--c", hslWith(hue, 70, 56, .58));
+      cell.style.setProperty("--c-strong", hslWith(hue, 78, 64, .96));
       cell.classList.remove("lit"); void cell.offsetWidth; cell.classList.add("lit");
       if (autoReset) {
+        // sparkle hold, shortened from 2200ms — long holds made random cells look stuck on
         setTimeout(function () {
           cell.classList.remove("lit");
-        }, 1400);
+        }, 1250);
       }
     }
     var waveActive = false;
@@ -4601,13 +4869,21 @@
           c.classList.remove("lit");
         });
         waveActive = false;
-      }, 1800);
+      }, 2200);
     }
+    /* The hex-wall highlight and the song's list dot both use this same hue, so they
+       always match. The next colour is derived from the last entry in the queue, so
+       the alternation survives a page reload. */
+    function nextDropHue() {
+      var last = queue.length ? queue[queue.length - 1] : null;
+      return (last && last.hue === DROP_GOLD) ? DROP_RED : DROP_GOLD;   // empty queue -> gold first
+    }
+
     function renderQueue() {
       queueEl.innerHTML = "";
       if (!queue.length) { var li = document.createElement("li"); li.className = "empty"; li.textContent = "No signals yet — be the first drop."; queueEl.appendChild(li); return; }
       queue.forEach(function (item) {
-        var swatch = hslWith(item.hue !== undefined ? item.hue : colorFor(item.name), 78, 62, 1);
+        var swatch = hslWith(item.hue !== undefined ? item.hue : colorFor(item.name), 68, 58, 1);
         var li = document.createElement("li");
         li.innerHTML = '<span class="grv" style="background:' + swatch + '"></span>' + escapeHTML(item.name);
         queueEl.appendChild(li);
@@ -4615,7 +4891,7 @@
     }
     function dropSong() {
       var v = songInput.value.trim(); if (!v) { songInput.focus(); return; }
-      var hue = colorFor(v);
+      var hue = nextDropHue();
       queue.push({ name: v, hue: hue }); if (queue.length > 7) queue.shift();
       try { localStorage.setItem(STORE, JSON.stringify(queue)); } catch (e) { }
       songInput.value = ""; amps = []; renderQueue();
@@ -4625,15 +4901,22 @@
     songInput.addEventListener("keydown", function (e) { if (e.key === "Enter") dropSong(); });
     renderQueue();
 
-    /* Idle sparkle — occasionally light a random hex in warm palette */
-    /* Themed sparkle palette — gold, halo cream, wine, violet, amber (matches site accents) */
-    var idleHues = [44, 44, 38, 344, 44, 38, 344, 34];
+    /* Idle sparkle — active glow count increased by 15%+ with smooth fade transitions */
+    /* Wine Red & Red (40%) | Light & Golden Yellow (45%) | Purplish (15%) */
+    var idleHues = [
+      344, 348, 340, 352, 344, 348, 340, 352,
+      44, 48, 38, 42, 50, 44, 48, 38, 44,
+      312, 308, 316   // magenta-purple, matching the tiles
+    ];
     function idleSparkle() {
       if (!hexCells.length || waveActive) return;
-      var idx = Math.floor(Math.random() * hexCells.length);
-      litHex(idx, idleHues[Math.floor(Math.random() * idleHues.length)], true);
+      // Trigger 2 hexes per tick to increase total active glowing hexes by ~25%
+      for (var k = 0; k < 2; k++) {
+        var idx = Math.floor(Math.random() * hexCells.length);
+        litHex(idx, idleHues[Math.floor(Math.random() * idleHues.length)], true);
+      }
     }
-    if (!REDUCE) setInterval(idleSparkle, 900);
+    if (!REDUCE) setInterval(idleSparkle, 520);
 
     /* ============================================================
        GENERIC reveal + master loop
