@@ -33,6 +33,41 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      # The song wall's connection details come from repo secrets rather than
+      # living in the committed HTML, so the project can be swapped or rotated
+      # without a code change. They are substituted into the copy being
+      # deployed; the file in git keeps its placeholders.
+      #
+      # To be clear about what this is and is not: the anon key is a PUBLIC
+      # key and ends up readable in the served page either way. This keeps it
+      # out of the repository and its history — it does not make it a secret.
+      # What actually protects the data is the row level security and the two
+      # functions in supabase/schema.sql.
+      - name: Inject song wall config
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning::SUPABASE_URL / SUPABASE_ANON_KEY are not set — deploying with the song wall in device-only mode."
+            exit 0
+          fi
+          case "$SUPABASE_URL" in
+            https://*) ;;
+            *) echo "::error::SUPABASE_URL must start with https:// (got '${SUPABASE_URL%%:*}...')"; exit 1 ;;
+          esac
+          # A service_role key would hand every visitor full write access.
+          if printf '%s' "$SUPABASE_ANON_KEY" | base64 -d 2>/dev/null | grep -q 'service_role'; then
+            echo "::error::That is the service_role key, not the anon key. Refusing to publish it."
+            exit 1
+          fi
+          # Safe with | as the delimiter: URLs and JWTs contain no | or &.
+          sed -i "s|__SUPABASE_URL__|${SUPABASE_URL%/}|g; s|__SUPABASE_ANON_KEY__|${SUPABASE_ANON_KEY}|g" index.html
+          grep -q '__SUPABASE_URL__\|__SUPABASE_ANON_KEY__' index.html \
+            && { echo "::error::A placeholder survived substitution."; exit 1; } || true
+          echo "Song wall pointed at ${SUPABASE_URL%/}"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
