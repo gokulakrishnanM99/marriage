@@ -1177,6 +1177,33 @@
     color: #fff;
     margin-top: .4em;
     letter-spacing: .01em;
+    text-wrap: balance;
+  }
+
+  /* The ordinal on a date rides high and small, as it would on a card. */
+  .cell .v sup {
+    font-size: .52em;
+    vertical-align: .62em;
+    letter-spacing: .02em;
+    margin-left: .04em;
+  }
+
+  /* Second line of a cell: the time under its date, the city under the hall. */
+  .cell .v-sub {
+    font-family: var(--font-mono);
+    font-size: clamp(10.5px, 1.35vw, 12.5px);
+    letter-spacing: .12em;
+    color: var(--gold);
+    margin-top: .72em;
+    text-wrap: balance;
+  }
+
+  .cell:nth-child(2) .v-sub {
+    color: var(--wine-soft);
+  }
+
+  .cell:nth-child(3) .v-sub {
+    color: var(--halo);
   }
 
   .cell .tick {
@@ -1555,6 +1582,7 @@
   /* Desk and up: deck and wall out to the two sides with the list between them,
      and both given the room to actually be looked at. */
   @media(min-width:1100px) {
+
     /* Three abreast needs the width back that the chapter gutter was holding,
        or the deck and the wall would each come out narrower than they were side
        by side — the opposite of the point. */
@@ -1698,7 +1726,7 @@
     transform: translateY(1px) scale(.98);
   }
 
-  /* Both picks spent. The button goes cold so the turn reads as over at a
+  /* Every pick spent. The button goes cold so the turn reads as over at a
      glance — but only the button: the field still takes typing, so the signal
      trace still draws and the wall still lights. */
   .dj-input button:disabled {
@@ -2018,18 +2046,31 @@
     flex-direction: column;
     gap: 7px;
     overflow: hidden;
+    /* This is a flex child of .dj-list, and `overflow: hidden` costs an item its
+       automatic minimum size — so without this the closed list was squeezed by
+       the column it sits in and clipped its own last row. */
+    flex: 0 0 auto;
   }
 
-  /* Opened out. The list scrolls, and it dissolves at both ends instead of
-     stopping at a hard edge — the same soft falloff the rest of the page uses —
-     with a rail drawn in the two ray colours rather than the browser's own. */
+  /* Opened out. The box is sized in JS to a whole number of rows and the rows
+     snap, so a song is never shown as half a box — an earlier version faded the
+     two ends, which looked right but sliced whatever row it landed on. The rail
+     is drawn in the two ray colours rather than the browser's own.
+     The max-height here is only a fallback; sizeQueue sets the real one. */
   .queue.expanded {
     overflow-y: auto;
     max-height: clamp(280px, 46vh, 520px);
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 20px), transparent 100%);
+    scroll-snap-type: y mandatory;
+    /* Snapping aligns a row to the scrollport's own top, which sits above the
+       padding — without this the row after the last whole one peeked through by
+       the height of that padding. */
+    scroll-padding-top: 4px;
     scrollbar-width: thin;
     scrollbar-color: rgba(234, 197, 108, .45) transparent;
+  }
+
+  .queue.expanded li {
+    scroll-snap-align: start;
   }
 
   .queue.expanded::-webkit-scrollbar {
@@ -2131,8 +2172,8 @@
     background: rgba(255, 255, 255, .05);
   }
 
-  /* Your own two picks. --slot-line / --slot-glow are set per row: gold for
-     the first one you claimed, red for the second. This is deliberately a
+  /* Your own picks. --slot-line / --slot-glow are set per row, alternating
+     gold and red in the order you claimed them. This is deliberately a
      different signal from the dot, which tracks list position instead. */
   .queue li.mine {
     border-color: var(--slot-line);
@@ -2452,9 +2493,9 @@
           <span class="name" data-split>Pooja</span>
         </h1>
 
-        <p class="tagline">One light, sent through two paths — a quantum engineer and a keeper of the breath, arriving
-          at the same bright point.</p>
-        <div class="hero-meta">Thirumalai &amp; Pooja · <b id="heroDate">31st Aug 2026</b> · Chennai</div>
+        <p class="tagline">Two paths through life, each finding its own way, yet converging at one bright point, on one
+          beautiful day.</p>
+        <div class="hero-meta">Thirumalai &amp; Pooja · <b id="heroDate">30 &amp 31 Aug 2026</b> · Chennai</div>
         <div class="scrollcue">Scroll to travel<span class="bar"></span></div>
       </div>
     </section>
@@ -2697,7 +2738,8 @@
             </div>
             <div class="cap-k">2015 · Chennai</div>
             <div class="cap-t display">KCG College</div>
-            <div class="cap-s">A single diya is lit — the coherent beam that will split into two paths.</div>
+            <div class="cap-s">The place they should have met - in some parallel world, they did. In this one, not yet.
+            </div>
           </div>
 
           <div class="node up" data-x="760" data-y="182">
@@ -2721,14 +2763,14 @@
                 <circle class="stroke-thin" cx="40" cy="46" r="4" opacity=".5" />
               </svg>
             </div>
-            <div class="cap-k">Her path · Pooja</div>
+            <div class="cap-k">Pooja's path · Kanyakumari </div>
             <div class="cap-t gold display">MBBS</div>
-            <div class="cap-s">The long calibration — five years of listening for the steady rhythm.</div>
+            <div class="cap-s">The Dream path begins.</div>
           </div>
           <div class="node up" data-x="1240" data-y="178">
             <div class="glyph">
               <svg class="glyph-icon gold" viewBox="0 0 56 56" aria-hidden="true">
-                <!-- NEET PG: Medical Caduceus — Winged Staff with Twin Serpents -->
+                <!-- INI-CET: Medical Caduceus — Winged Staff with Twin Serpents -->
                 <!-- Finial sphere & staff rod -->
                 <circle class="fill" cx="28" cy="5.5" r="2.8" />
                 <line class="stroke-thin" x1="25" y1="9" x2="31" y2="9" stroke-width="1.2" />
@@ -2778,9 +2820,9 @@
                 <circle cx="34" cy="19.2" r="0.6" fill="#0F0A18" opacity=".8" />
               </svg>
             </div>
-            <div class="cap-k">Her path</div>
-            <div class="cap-t gold display">NEET PG</div>
-            <div class="cap-s">The threshold — the signal spikes clean through and holds.</div>
+            <div class="cap-k">Pooja's path</div>
+            <div class="cap-t gold display">INI-CET</div>
+            <div class="cap-s">A breakthrough over every challenge.</div>
           </div>
           <div class="node up" data-x="1780" data-y="184">
             <div class="glyph">
@@ -2793,9 +2835,9 @@
                 <circle class="fill pop" cx="47" cy="14" r="1.4" opacity=".9" />
               </svg>
             </div>
-            <div class="cap-k">Her path · Hyderabad</div>
+            <div class="cap-k">Pooja's path · Hyderabad</div>
             <div class="cap-t gold display">AIIMS — Anaesthesia</div>
-            <div class="cap-s">Keeper of the steady breath. The monitor settles to a calm, certain rhythm.</div>
+            <div class="cap-s">In induction.</div>
           </div>
 
           <div class="node" data-x="760" data-y="528">
@@ -2824,9 +2866,9 @@
                   Z" />
               </svg>
             </div>
-            <div class="cap-k">His path · Thirumalai</div>
+            <div class="cap-k">Thiru's path · Chennai</div>
             <div class="cap-t wine display">Amazon</div>
-            <div class="cap-s">The system boots. The packet begins to move.</div>
+            <div class="cap-s">Beginning of the inspirations yet to come.</div>
           </div>
           <div class="node" data-x="1180" data-y="525">
             <div class="glyph">
@@ -2864,9 +2906,9 @@
                 </g>
               </svg>
             </div>
-            <div class="cap-k">His path</div>
+            <div class="cap-k">Thiru's path</div>
             <div class="cap-t wine display">GATE</div>
-            <div class="cap-s">Study, gears turning — the exam that sets the direction.</div>
+            <div class="cap-s">"Namma Jeichitom Maara" moment | We won, Maara.</div>
           </div>
           <div class="node" data-x="1560" data-y="520">
             <div class="glyph">
@@ -2887,9 +2929,9 @@
                 <circle class="fill" cx="28" cy="28" r="1.6" />
               </svg>
             </div>
-            <div class="cap-k">His path · Jodhpur</div>
+            <div class="cap-k">Thiru's path · Jodhpur</div>
             <div class="cap-t wine display">IIT — Quantum Engg.</div>
-            <div class="cap-s">Coherence tightens; the noise falls away.</div>
+            <div class="cap-s">Settling into superPosition.</div>
           </div>
           <div class="node" data-x="1980" data-y="524">
             <div class="glyph">
@@ -2904,9 +2946,9 @@
                 <line class="stroke-thin" x1="47" y1="30" x2="50" y2="30" opacity=".7" />
               </svg>
             </div>
-            <div class="cap-k">His path</div>
+            <div class="cap-k">Thiru's path · Bengaluru</div>
             <div class="cap-t wine display">Quantum Engineer</div>
-            <div class="cap-s">A stable entangled state — ready to converge.</div>
+            <div class="cap-s">In the phase of Entanglement.</div>
           </div>
 
           <div class="node up" data-x="2465" data-y="350">
@@ -2923,8 +2965,8 @@
             </div>
             <div class="cap-k">2026 · Chennai</div>
             <div class="cap-t display">Under The Mandapam</div>
-            <div class="cap-s">Two paths converge — bright and dark fringes settle into pillars, and the ceremony
-              begins.</div>
+            <div class="cap-s">The ultimate interference under the pillars of Bright and Dark bands of the lifelong
+              journey.</div>
           </div>
         </div>
 
@@ -2953,8 +2995,9 @@
                 <circle cx="23" cy="22" r="1" fill="currentColor" opacity=".6" />
               </svg>
             </div>
-            <div class="k">Date</div>
-            <div class="v display">[DATE PLACEHOLDER]</div>
+            <div class="k">Reception</div>
+            <div class="v display">30<sup>th</sup> August 2026</div>
+            <div class="v-sub">Sunday · 6:00 PM onwards</div>
           </div>
           <div class="cell">
             <div class="cell-ico" aria-hidden="true">
@@ -2971,8 +3014,9 @@
                 <circle cx="25" cy="17" r=".8" fill="currentColor" opacity=".6" />
               </svg>
             </div>
-            <div class="k">Time</div>
-            <div class="v display">[TIME PLACEHOLDER]</div>
+            <div class="k">Wedding</div>
+            <div class="v display">31<sup>st</sup> August 2026</div>
+            <div class="v-sub">Monday · 6:00 – 7:30 AM</div>
           </div>
           <div class="cell">
             <div class="cell-ico" aria-hidden="true">
@@ -2984,7 +3028,8 @@
               </svg>
             </div>
             <div class="k">Venue</div>
-            <div class="v display">[VENUE PLACEHOLDER]</div>
+            <div class="v display">Sri Venkatesh Mahal</div>
+            <div class="v-sub">Pallavaram, Chennai</div>
           </div>
         </div>
 
@@ -3013,10 +3058,8 @@
       <div class="chapter-head">
         <div class="eyebrow rise">The DJ frequency</div>
         <h2 class="chapter-title display rise">Drop A Signal — <em>Light The Wall</em></h2>
-        <p class="chapter-sub rise">Two songs you want the floor to feel — and everyone is looking at the same wall.
-          Each
-          drop lights a cell in its own color and pushes a ripple through the whole wall; tap a song already up there to
-          add your weight to it instead.</p>
+        <p class="chapter-sub rise">The songs you want the floor to feel; Drop a new one, or tap a song already up there
+          to back it. The top 10 will be played for you to lit the dance floors with your moves.</p>
       </div>
       <div class="panel">
         <div class="scope">
@@ -4297,12 +4340,12 @@
               <p>All parties are directed to appear at the coordinates below. Attendance is not merely requested — it is
                 the observed outcome.</p>
               <dl class="tvb-decree-fields">
-                <dt>Date</dt>
-                <dd>[DATE PLACEHOLDER]</dd>
-                <dt>Time</dt>
-                <dd>[TIME PLACEHOLDER]</dd>
-                <dt>Venue</dt>
-                <dd>[VENUE PLACEHOLDER] · Chennai</dd>
+                <dt>Reception</dt>
+                <dd>30 Aug 2026 · 18:00 IST onwards</dd>
+                <dt>Nexus Event</dt>
+                <dd>31 Aug 2026 · 06:00 – 07:30 IST</dd>
+                <dt>Coordinates</dt>
+                <dd>Sri Venkatesh Mahal · Pallavaram, Chennai</dd>
                 <dt>Dress</dt>
                 <dd>Formal · Timeline-appropriate</dd>
               </dl>
@@ -4847,7 +4890,12 @@
     /* ============================================================
        3. INVITATION — convergence countdown, dance floor, glass tilt, actions
        ============================================================ */
-    var WEDDING_DATE = new Date("2026-08-31T18:00:00"), PLAN_WINDOW = 365;
+    /* Both written with the +05:30 offset spelled out, so they are the same
+       instant whatever timezone the guest's phone is set to — the countdown
+       and the calendar file cannot drift by a day for anyone travelling. */
+    var WEDDING_DATE = new Date("2026-08-31T06:00:00+05:30");
+    var RECEPTION_DATE = new Date("2026-08-30T18:00:00+05:30");
+    var PLAN_WINDOW = 365;
     var daysLeft = Math.max(0, Math.ceil((WEDDING_DATE - new Date()) / 86400000));
     document.getElementById("days").textContent = daysLeft;
 
@@ -4931,18 +4979,29 @@
 
     /* Save-the-date (.ics via data-URI) + Directions */
     (function () {
-      var MAPS_URL = "https://maps.google.com/?q=Chennai";  // TODO: real venue URL
+      var MAPS_URL = "https://maps.app.goo.gl/MJh3EFkfqU8jYnXEA";
+      var VENUE = "Sri Venkatesh Mahal, Pallavaram, Chennai";
       document.getElementById("directions").setAttribute("href", MAPS_URL);
       function pad(x) { return (x < 10 ? "0" : "") + x; }
       function fmt(d) { return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + "00Z"; }
+      /* Commas, semicolons and backslashes carry meaning in an .ics line and
+         have to be escaped, or the venue's comma would split the field. */
+      function esc(s) { return String(s).replace(/([\\,;])/g, "\\$1").replace(/\n/g, "\\n"); }
+      function vevent(start, end, summary, desc, n) {
+        return ["BEGIN:VEVENT", "UID:" + Date.now() + "-" + n + "@phaselock",
+          "DTSTAMP:" + fmt(new Date()), "DTSTART:" + fmt(start), "DTEND:" + fmt(end),
+          "SUMMARY:" + esc(summary), "LOCATION:" + esc(VENUE),
+          "DESCRIPTION:" + esc(desc), "URL:" + MAPS_URL, "END:VEVENT"];
+      }
       document.getElementById("saveDate").addEventListener("click", function (e) {
         e.preventDefault();
-        var end = new Date(WEDDING_DATE.getTime() + 4 * 3600000);
-        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PhaseLock//EN", "BEGIN:VEVENT",
-          "UID:" + Date.now() + "@phaselock", "DTSTAMP:" + fmt(new Date()),
-          "DTSTART:" + fmt(WEDDING_DATE), "DTEND:" + fmt(end),
-          "SUMMARY:Thirumalai & Pooja — Wedding", "LOCATION:Chennai",
-          "DESCRIPTION:Two paths, one bright point.", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+        /* Two events, one file — most calendars import both in a single tap. */
+        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PhaseLock//EN", "CALSCALE:GREGORIAN"]
+          .concat(vevent(RECEPTION_DATE, new Date(RECEPTION_DATE.getTime() + 4 * 3600000),
+            "Thirumalai & Pooja — Reception", "Reception, 6:00 PM onwards. Two paths, one bright point.", 1))
+          .concat(vevent(WEDDING_DATE, new Date(WEDDING_DATE.getTime() + 5400000),
+            "Thirumalai & Pooja — Wedding", "Muhurtham, 6:00 – 7:30 AM. Two paths, one bright point.", 2))
+          .concat(["END:VCALENDAR"]).join("\r\n");
         var a = document.createElement("a");
         a.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
         a.download = "thirumalai-pooja.ics"; document.body.appendChild(a); a.click(); a.remove();
@@ -5010,7 +5069,18 @@
         : { url: url, anonKey: key };
     })();
 
-    var MAX_PICKS = 2;                      // songs one guest may hold at once
+    /* Songs one guest may hold at once.
+       ─────────────────────────────────────────────────────────────────────
+       DO NOT change this to change the limit. The real number lives in
+       public.max_picks() at the top of supabase/schema.sql, and the page asks
+       the database for it on load — so the rule the database enforces and the
+       rule the page shows can never disagree.
+
+       This value is only the fallback: what the page uses before the answer
+       arrives, if the database cannot be reached, and when the wall is running
+       in device-only mode with no database at all. Keep it equal to the
+       schema's number so the two agree offline too. */
+    var MAX_PICKS = 3;                      // fallback; see supabase/schema.sql
     var DROP_GOLD = 44, DROP_RED = 350;     // the wall's two signal hues
 
     /* A guest is identified by a random id their own browser keeps — no
@@ -5061,6 +5131,8 @@
             api("/rest/v1/song_claims?select=song_id,kind,created_at&order=created_at.asc&device_id=eq." + encodeURIComponent(deviceId))
           ]).then(function (r) { return { songs: r[0] || [], claims: r[1] || [] }; });
         },
+        /* The limit is the database's to state, not the page's — see MAX_PICKS. */
+        limit: function () { return api("/rest/v1/rpc/max_picks", "POST", {}); },
         claim: function (name) { return api("/rest/v1/rpc/claim_song", "POST", { p_name: name, p_device_id: deviceId }); },
         release: function (id) { return api("/rest/v1/rpc/release_claim", "POST", { p_song_id: id, p_device_id: deviceId }); }
       };
@@ -5138,6 +5210,51 @@
     }
 
     var djWall = (DJ_DB.url && DJ_DB.anonKey) ? remoteWall(DJ_DB) : localWall();
+
+    /* Development aid. Open  ?seed=20  on a local address and the device-only
+       wall fills with that many songs, so the ranked list, the top-ten cut and
+       the scrolling can be looked at without twenty phones. Two of them are
+       parked below tenth place and claimed by this browser, so the pinned-pick
+       behaviour shows as well.
+
+       It writes to this browser's own storage and nowhere else: it stops if the
+       page is not on localhost, and it stops if the shared wall is connected —
+       so there is no path from here to the database. ?seed=0 clears it. */
+    (function () {
+      var m = location.search.match(/[?&]seed=(\d+)/);
+      if (!m || djWall.shared) return;
+      if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+      var K = "phaselock.djwall.v2", n = parseInt(m[1], 10);
+      if (!n) { try { localStorage.removeItem(K); } catch (e) { } return; }
+      var TITLES = ["Munbe Vaa", "Rowdy Baby", "Vaathi Coming", "Why This Kolaveri Di", "Appadi Podu",
+        "Kutti Story", "Aaluma Doluma", "Danga Maari Oodhari", "Selfie Pulla", "Ennodu Nee Irundhaal",
+        "Maari Thara Local", "Jimikki Kammal", "Arabic Kuthu", "Naan Un Azhaginile", "Otha Sollala",
+        "Chinna Chinna Aasai", "Vaseegara", "Pachai Nirame", "Nenjukkul Peidhidum", "Anbe Sivam",
+        "Kadhal Rojave", "Uyire Uyire", "Mankatha Theme", "Vaseegara Reprise"];
+      var songs = [], claims = [], now = Date.now();
+      for (var i = 0; i < n; i++) {
+        var id = "s-seed-" + i, votes = Math.max(1, n - i);
+        songs.push({
+          id: id, name: TITLES[i % TITLES.length] + (i < TITLES.length ? "" : " (" + (i + 1) + ")"),
+          created_by: "guest-" + i, created_at: new Date(now - (600 - i) * 60000).toISOString()
+        });
+        for (var v = 0; v < votes; v++) {
+          claims.push({
+            song_id: id, device_id: "guest-" + i + "-" + v, kind: v ? "boost" : "new",
+            created_at: new Date(now - (600 - i) * 60000 + v * 100).toISOString()
+          });
+        }
+      }
+      // this browser's own two picks, deliberately below the tenth place
+      [Math.min(n - 1, 16), Math.min(n - 1, 19)].filter(function (x, k, a) { return a.indexOf(x) === k; })
+        .forEach(function (idx, k) {
+          claims.push({
+            song_id: "s-seed-" + idx, device_id: deviceId, kind: k ? "new" : "boost",
+            created_at: new Date(now + k * 1000).toISOString()
+          });
+        });
+      try { localStorage.setItem(K, JSON.stringify({ songs: songs, claims: claims })); } catch (e) { }
+    })();
     function sizeScope() { var r = scopeCanvas.getBoundingClientRect(); scopeCanvas.width = r.width * DPR; scopeCanvas.height = r.height * DPR; }
     var amps = [], BARS = 64;
     function buildAmps(s) { amps = []; if (!s) return; for (var i = 0; i < BARS; i++) { var cc = s.charCodeAt(i % s.length) || 0; var base = ((cc * 13 + i * 7) % 100) / 100; var env = Math.sin((i / BARS) * Math.PI); amps.push(0.15 + base * 0.85 * (0.4 + 0.6 * env)); } }
@@ -5369,12 +5486,13 @@
          · the hex-wall flash    — the dot colour of the row you just lit. A
            brand-new song lands at the bottom, so it flashes the colour that
            follows the current last entry.
-         · your own row outline  — your 1st pick gold, your 2nd red,
-           independent of where those two songs happen to sit in the list. */
+         · your own row outline  — the order you claimed them in: 1st gold,
+           2nd red, 3rd gold, and so on, independent of where those songs
+           happen to sit in the list. */
     var songs = [], myClaims = [], wallLoaded = false, wallSig = "", knownIds = [], drawnIds = [];
     var djNote = document.getElementById("djNote");
     var NOTE_BASE = djWall.shared
-      ? "Two picks each, shared with everyone. Tap a song already up there to add your weight to it."
+      ? "A few picks each, shared with everyone. Tap a song already up there to add your weight to it."
       : "Saved on this device for now — the shared wall switches on once the database is connected.";
 
     function dotHue(i) { return (i % 2 === 0) ? DROP_GOLD : DROP_RED; }
@@ -5393,17 +5511,17 @@
     function note(msg, warn) {
       clearTimeout(noteTimer);
       var spent = myClaims.length >= MAX_PICKS;
-      djNote.textContent = msg || ((spent ? "Both picks used — remove one to drop another." : NOTE_BASE)
+      djNote.textContent = msg || ((spent ? "All picks used — remove one to drop another." : NOTE_BASE)
         + "  ·  Your picks: " + myClaims.length + " / " + MAX_PICKS);
       djNote.classList.toggle("warn", !!warn);
       if (msg) noteTimer = setTimeout(function () { note(); }, 4600);
       /* Only the button is switched off. The input stays live so the signal
          trace keeps drawing as they type, and the hex wall is untouched. */
       songSend.disabled = spent;
-      songSend.title = spent ? "Both of your picks are used" : "";
+      songSend.title = spent ? "All of your picks are used" : "";
     }
     var WALL_ERRORS = {
-      claim_limit: "That is both of your picks — free one up by tapping a song you have highlighted.",
+      claim_limit: "That is all of your picks — free one up by tapping a song you have highlighted.",
       already_claimed: "That song is already one of your picks.",
       not_claimed: "That pick is no longer yours — the wall has moved on.",
       bad_name: "Give the song a name first.",
@@ -5428,9 +5546,37 @@
     function visibleRows() {
       var rows = songs.map(function (s, i) { return { song: s, rank: i, pinned: false }; });
       if (queueExpanded || rows.length <= TOP_N) return rows;
-      var mine = rows.slice(TOP_N).filter(function (r) { return claimFor(r.song.id); });
+      /* Ten rows, never eleven — your carried-up picks come out of that ten
+         rather than being added on top of it. Each pick taken up shortens the
+         ranked run below, which can push a further pick out of it, so settle
+         the two against each other before drawing. */
+      var mineRanks = rows.filter(function (r) { return claimFor(r.song.id); })
+        .map(function (r) { return r.rank; });
+      var slots = TOP_N;
+      for (var pass = 0; pass < MAX_PICKS + 2; pass++) {
+        var carried = mineRanks.filter(function (rk) { return rk >= slots; }).length;
+        if (TOP_N - carried === slots) break;
+        slots = TOP_N - carried;
+      }
+      var mine = rows.filter(function (r) { return r.rank >= slots && claimFor(r.song.id); });
       mine.forEach(function (r) { r.pinned = true; });
-      return mine.concat(rows.slice(0, TOP_N));
+      return mine.concat(rows.slice(0, slots));
+    }
+
+    /* Height the opened list to an exact number of whole rows, measured rather
+       than assumed — the row height moves with the viewport, since the titles
+       are sized in vw. Without this the box ends mid-row and the last song
+       shows as a sliced box. */
+    var QUEUE_VISIBLE = 8;
+    function sizeQueue() {
+      if (!queueExpanded) { queueEl.style.maxHeight = ""; return; }
+      var first = queueEl.querySelector("li");
+      if (!first) return;
+      var cs = getComputedStyle(queueEl);
+      var gap = parseFloat(cs.rowGap) || 0;
+      var pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+      var n = Math.max(4, Math.min(QUEUE_VISIBLE, queueEl.children.length));
+      queueEl.style.maxHeight = (n * first.offsetHeight + (n - 1) * gap + pad) + "px";
     }
 
     function syncMore() {
@@ -5462,13 +5608,17 @@
           + (r.pinned ? " pinned" : "") + (drawnIds.indexOf(s.id) < 0 ? " fresh" : "");
         row.setAttribute("data-id", s.id);
         if (slot) {
-          var sh = (slot === 1) ? DROP_GOLD : DROP_RED;      // your 1st pick gold, 2nd red
+          /* Your picks alternate gold, red, gold… in the order you claimed
+             them, so the scheme keeps working whatever MAX_PICKS is. This is
+             deliberately a different signal from the dot, which tracks the
+             song's position on the wall instead. */
+          var sh = (slot % 2 === 1) ? DROP_GOLD : DROP_RED;
           row.style.setProperty("--slot-line", hslWith(sh, 72, 60, .82));
           row.style.setProperty("--slot-glow", hslWith(sh, 72, 56, .38));
         }
         row.title = claim
           ? (own ? "Your drop — remove it with ×" : "Tap to take your weight back off")
-          : (myClaims.length >= MAX_PICKS ? "Both of your picks are used" : "Tap to add your weight to this song");
+          : (myClaims.length >= MAX_PICKS ? "All of your picks are used" : "Tap to add your weight to this song");
         row.innerHTML =
           '<span class="grv" style="background:' + hslWith(dotHue(r.rank), 68, 58, 1) + '"></span>' +
           (r.pinned ? '<span class="q-rank">#' + (r.rank + 1) + '</span>' : '') +
@@ -5481,6 +5631,7 @@
          the list is opened out still rises into place rather than appearing. */
       drawnIds = shown.map(function (r) { return r.song.id; });
       syncMore();
+      sizeQueue();
     }
 
     moreBtn.addEventListener("click", function () {
@@ -5611,6 +5762,17 @@
       writeWall(function () { return djWall.claim(songs[at].name); });
     });
 
+    /* Ask the database what the limit is before drawing anything that depends
+       on it. If it cannot say — no database, or it is unreachable — the
+       fallback above stands, which is also the right answer in device-only
+       mode. Nothing waits on this: the wall loads regardless. */
+    if (djWall.limit) {
+      djWall.limit().then(function (n) {
+        n = parseInt(n, 10);
+        if (n > 0 && n !== MAX_PICKS) { MAX_PICKS = n; renderQueue(); note(); }
+      }, function () { });
+    }
+
     renderQueue(); note();
     refreshWall().catch(function () { note("Could not reach the wall — showing nothing until it answers.", true); });
 
@@ -5662,7 +5824,7 @@
     }
     function updateRail() { railFill.style.height = (scroll * 100).toFixed(2) + "%"; }
     function onScroll() { updateScroll(); updateJourney(); updateRail(); }
-    function onResize() { sizeField(); layoutJourney(); sizeScope(); sizeConv(); updateScroll(); updateJourney(); }
+    function onResize() { sizeField(); layoutJourney(); sizeScope(); sizeConv(); sizeQueue(); updateScroll(); updateJourney(); }
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("pointermove", function (e) { pointer = [e.clientX / innerWidth, 1 - e.clientY / innerHeight]; });

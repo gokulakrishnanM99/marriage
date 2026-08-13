@@ -13,6 +13,21 @@
 
 create extension if not exists pgcrypto;
 
+-- =====================================================================
+--  ▼▼▼  HOW MANY SONGS ONE GUEST MAY HOLD  —  CHANGE THE NUMBER HERE  ▼▼▼
+-- =====================================================================
+--  This is the only place the limit is written down. The trigger below
+--  enforces it, and the page asks the database for it on load, so the
+--  page and the rule can never drift apart.
+--
+--  To change it: edit the number, re-run this file in the Supabase SQL
+--  editor, and reload the site. No code change, no redeploy.
+-- =====================================================================
+create or replace function public.max_picks() returns integer
+  language sql immutable parallel safe as $$ select 3 $$;
+
+grant execute on function public.max_picks() to anon, authenticated;
+
 -- ---------------------------------------------------------------------
 --  songs — one row per distinct song title
 -- ---------------------------------------------------------------------
@@ -89,12 +104,15 @@ create trigger song_claims_count
   for each row execute function public.sync_song_count();
 
 -- ---------------------------------------------------------------------
---  Two picks per guest — enforced at the table, not just in the RPC
+--  Picks per guest — enforced at the table, not just in the RPC, so a
+--  visitor calling the REST API directly cannot get around it either.
+--
+--  The number itself lives in public.max_picks() at the top of this file.
 -- ---------------------------------------------------------------------
 create or replace function public.enforce_claim_limit() returns trigger
 language plpgsql as $$
 begin
-  if (select count(*) from public.song_claims where device_id = new.device_id) >= 2 then
+  if (select count(*) from public.song_claims where device_id = new.device_id) >= public.max_picks() then
     raise exception 'claim_limit';
   end if;
   return new;

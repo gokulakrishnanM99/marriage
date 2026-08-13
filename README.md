@@ -29,9 +29,16 @@ the background falls back to a static gradient.
 ## Drop A Signal — the shared song wall
 
 Guests name songs they want on the floor, and everyone sees the same list.
-Each guest gets **two picks**: drop a new song, or tap one already up there to
-add their weight to it, in any combination. Songs sort by how many guests are
-behind them.
+Each guest gets a fixed number of **picks** (currently three): drop a new song,
+or tap one already up there to add their weight to it, in any combination.
+Songs sort by how many guests are behind them.
+
+**Changing how many picks each guest gets** — one number, one place:
+`public.max_picks()` at the top of `supabase/schema.sql`. Edit it, re-run that
+file in the Supabase SQL editor, reload the site. No code change and no
+redeploy: the database enforces the rule, and the page asks the database what
+it is, so the two can never drift apart. (`MAX_PICKS` in `index.html` is only
+the offline fallback — keep it equal to the schema's number.)
 
 The page talks to a hosted Postgres (**Supabase**) directly over HTTPS, so the
 site stays a plain static file and can keep living on GitHub Pages — there is no
@@ -68,8 +75,11 @@ exists. Behaviour is identical either way — only the reach changes.
 - **Performance:** the fullscreen WebGL cosmos renders at 1× pixel ratio; the secondary
   canvases and timeline pulses only draw while near the viewport; the whole render loop
   pauses when the browser tab is hidden.
-- **Wedding date** is the `WEDDING_DATE` constant in the `<script>` block (drives the
-  countdown). Ceremony date/time/venue live in the invitation section.
+- **Dates** are the `WEDDING_DATE` and `RECEPTION_DATE` constants in the `<script>` block.
+  Both are written with the `+05:30` offset spelled out, so the countdown and the `.ics`
+  are the same instant on a phone set to any timezone. `WEDDING_DATE` drives the countdown;
+  the Save-the-date button writes both events into one calendar file. The dates and times a
+  guest reads are the three cells in the invitation section, and the venue link is `MAPS_URL`.
 - **The convergence countdown** measures against `PLAN_WINDOW` (365 days): the two beams
   and the progress bar under them both sit at `daysLeft / PLAN_WINDOW` along the line, so
   they close by one day's worth every day and meet at the centre on the day itself.
