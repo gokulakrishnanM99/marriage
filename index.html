@@ -1330,6 +1330,13 @@
     margin-top: 6px;
   }
 
+  /* On the day the number becomes a word, and a word set at two-digit size
+     runs into the walls of the card on a phone. */
+  .cc-num.cc-word b {
+    font-size: clamp(40px, 8.4vw, 70px);
+    letter-spacing: .015em;
+  }
+
   .cc-num b {
     font-family: var(--font-display);
     font-weight: 500;
@@ -4948,8 +4955,62 @@
     var WEDDING_DATE = new Date("2026-08-31T06:00:00+05:30");
     var RECEPTION_DATE = new Date("2026-08-30T18:00:00+05:30");
     var PLAN_WINDOW = 365;
-    var daysLeft = Math.max(0, Math.ceil((WEDDING_DATE - new Date()) / 86400000));
-    document.getElementById("days").textContent = daysLeft;
+    /* The celebration opens with the reception the evening before, and is over
+       a few hours after the muhurtham. Between those two the card should say
+       the day is here; past the second it must stop counting down to a wedding
+       that has already happened. */
+    var CELEBRATION_ENDS = WEDDING_DATE.getTime() + 6 * 3600000;
+
+    /* Standing in front of the day. The arrival happens once, on one date, so
+       without this neither the wording nor the flare can be looked at before
+       the morning they matter:
+           ?ccdays=3        three days out
+           ?ccphase=today   the day itself
+           ?ccphase=after   the morning after
+       Written after the # instead of the ? works the same and never leaves the
+       browser, which is the easier one to thumb into a phone:  #ccphase=today
+       It only moves what this card displays — the invitation's real dates, the
+       calendar file and everything else are untouched. */
+    var ccOverride = (function () {
+      var q = new URLSearchParams(location.search);
+      var h = new URLSearchParams(location.hash.replace(/^#/, ""));
+      function get(k) { return q.get(k) !== null ? q.get(k) : h.get(k); }
+      var d = get("ccdays");
+      return { days: (d !== null && isFinite(parseFloat(d))) ? parseFloat(d) : null, phase: get("ccphase") };
+    })();
+
+    var nowMs = Date.now();
+    var msLeft = WEDDING_DATE - nowMs;
+    if (ccOverride.days !== null) msLeft = ccOverride.days * 86400000;
+    else if (ccOverride.phase === "today" || ccOverride.phase === "after") msLeft = 0;
+
+    /* Two readings of the same number. The card prints whole days; the beams
+       travel on the fraction, so the last hours actually move rather than the
+       final stretch happening in one jump at midnight. */
+    var exactDaysLeft = Math.max(0, msLeft / 86400000);
+    var daysLeft = Math.max(0, Math.ceil(msLeft / 86400000));
+
+    var ccPhase = ccOverride.phase
+      || (ccOverride.days !== null ? (msLeft > 0 ? "counting" : "today")
+        : nowMs >= CELEBRATION_ENDS ? "after"
+          : nowMs >= RECEPTION_DATE ? "today" : "counting");
+
+    (function () {
+      var copy = {
+        counting: { lead: "Until our two paths meet again", num: String(daysLeft), unit: daysLeft === 1 ? "day" : "days" },
+        today: { lead: "The two paths meet", num: "Today", unit: "" },
+        after: { lead: "Two paths · one bright point", num: "Married", unit: "" }
+      }[ccPhase] || { lead: "Until our two paths meet again", num: String(daysLeft), unit: "days" };
+      document.querySelector("#convcount .cc-lead").textContent = copy.lead;
+      document.getElementById("days").textContent = copy.num;
+      var unit = document.querySelector("#convcount .cc-unit");
+      unit.textContent = copy.unit;
+      unit.hidden = !copy.unit;
+      /* A word needs a different size from a two-digit number, or "Married"
+         runs into the walls of the card on a phone. */
+      document.getElementById("convcount").querySelector(".cc-num")
+        .classList.toggle("cc-word", ccPhase !== "counting");
+    })();
 
     /* --- "The Convergence Countdown": two beams close on one bright point --- */
     var convProgress = Math.min(1, Math.max(0, 1 - daysLeft / PLAN_WINDOW));
@@ -4962,15 +5023,31 @@
        run-in — a month out they are still better than half apart, and they only
        close to a hair in the final day or two.
 
-       APPROACH_DAYS is the single dial: it is roughly the point where the beams
-       are half closed. Lower it and they hold apart longer and rush in later;
-       raise it and the approach starts earlier and is gentler. */
-    var APPROACH_DAYS = 19;
+       APPROACH_DAYS is the single dial, and it reads directly: the beams are
+       half closed on the day when this many days are left. Set it to 8 and the
+       half-way look lands 8 days out. Lower it and they hold wide apart longer
+       and rush in at the end; raise it and the approach starts earlier and is
+       gentler. Roughly, for a given number of days left:
+
+           gap ≈ days / (days + APPROACH_DAYS)      (1 = fully apart, 0 = met)
+
+       At 8: a month out they are still ~76% apart, a week out about half,
+       and they close to a hair in the last day or two. */
+    var APPROACH_DAYS = 8;
     function beamGap(days) {
       if (days <= 0) return 0;
       var norm = (PLAN_WINDOW + APPROACH_DAYS) / PLAN_WINDOW;   // a full window still reads 0.94
       return Math.min(0.94, 0.94 * (days / (days + APPROACH_DAYS)) * norm);
     }
+    /* How near the two are, 0 = out at their starts, 1 = met. The bright point
+       used to be sized off the calendar instead — linear across the year — so
+       it reached ninety-odd per cent of its size a month out and then grew by
+       about a pixel on the day itself. Driving it from the closing instead
+       means the light swells as the beams actually come in, and the arrival is
+       something you can see rather than something you have to be told. */
+    var ccCloseness = Math.min(1, Math.max(0, 1 - beamGap(exactDaysLeft) / 0.94));
+    var ccArrived = ccPhase !== "counting";
+
     var convCanvas = document.getElementById("convWave"), cvx = convCanvas.getContext("2d");
     setTimeout(function () { document.getElementById("ccProg").style.width = (convProgress * 100).toFixed(1) + "%"; }, 400);
     function sizeConv() { var r = convCanvas.getBoundingClientRect(); convCanvas.width = Math.max(1, Math.floor(r.width * DPR)); convCanvas.height = Math.max(1, Math.floor(r.height * DPR)); }
@@ -4992,7 +5069,7 @@
       cvx.beginPath(); cvx.moveTo(0, mid); cvx.lineTo(W, mid); cvx.stroke();
       // Gap = normalised distance from the central bright point. The beams move every day and
       // reach the centre on the day itself; see beamGap for the shape of the approach.
-      var gap = beamGap(daysLeft);
+      var gap = beamGap(exactDaysLeft);
       // The beams breathe, but by a fraction of the gap that is left rather than a fixed amount —
       // otherwise in the last weeks the wobble is wider than the gap and the two heads swap sides
       // through the bright point. On the day the gap is 0, so they come to rest dead centre.
@@ -5000,13 +5077,26 @@
       var xg = cx - gap * half, xw = cx + gap * half;
       convTrail(0, xg, mid, "234,197,108");
       convTrail(W, xw, mid, "232,93,117");
-      var bloom = 0.25 + convProgress * 0.75 + 0.08 * Math.sin(t * 2.2);
-      var rad = (10 + convProgress * 26) * DPR * (0.9 + 0.1 * Math.sin(t * 2.2));
+      var bloom = 0.35 + ccCloseness * 0.65 + 0.08 * Math.sin(t * 2.2);
+      var rad = (16 + ccCloseness * 22) * DPR * (0.9 + 0.1 * Math.sin(t * 2.2));
       var rg = cvx.createRadialGradient(cx, mid, 0, cx, mid, rad);
       rg.addColorStop(0, "rgba(255,255,255," + (0.9 * bloom).toFixed(3) + ")");
       rg.addColorStop(0.4, "rgba(255,231,196," + (0.5 * bloom).toFixed(3) + ")");
       rg.addColorStop(1, "rgba(255,231,196,0)");
       cvx.fillStyle = rg; cvx.beginPath(); cvx.arc(cx, mid, rad, 0, 7); cvx.fill();
+      /* The arrival. Two rings leaving the bright point, half a period apart,
+         fading as they widen — the light letting go of what it just caught.
+         Only ever drawn on the day and after, and only two strokes a frame, so
+         it costs nothing on the days it is not wanted. */
+      if (ccArrived && !REDUCE) {
+        for (var k = 0; k < 2; k++) {
+          var p = ((t / 3.4) + k * 0.5) % 1;
+          var fade = (1 - p) * (1 - p) * 0.45;
+          cvx.beginPath(); cvx.arc(cx, mid, rad * (1 + p * 3.2), 0, 7);
+          cvx.strokeStyle = "rgba(255,231,196," + fade.toFixed(3) + ")";
+          cvx.lineWidth = 1.6 * DPR; cvx.stroke();
+        }
+      }
       convHead(xg, mid, "234,197,108");
       convHead(xw, mid, "232,93,117");
     }
