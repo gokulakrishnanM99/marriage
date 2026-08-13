@@ -796,7 +796,7 @@
 
   .node .cap-s {
     font-family: var(--font-body);
-    font-weight: 420;
+    font-weight: 400;
     font-size: 15px;
     color: var(--ink-dim);
     line-height: 1.55;
@@ -1490,23 +1490,30 @@
   }
 
   /* ===================== GALLERY ===================== */
+  /* Columns rather than a fixed grid: the photographs are a mix of upright
+     and wide, and a single tile shape would have to crop one of the two to
+     death — the wide frames lose the person on the far side. Each tile keeps
+     its own proportions and the columns pack around them. */
   #gallery .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: clamp(10px, 1.6vw, 18px);
+    columns: 3;
+    column-gap: clamp(10px, 1.6vw, 18px);
     max-width: 1100px;
     margin: clamp(44px, 7vw, 76px) auto 0;
   }
 
   @media(max-width:820px) {
     #gallery .grid {
-      grid-template-columns: repeat(2, 1fr);
+      columns: 2;
     }
   }
 
   .tile {
     position: relative;
+    /* Overridden per photo from its real pixel size, so the space is reserved
+       before the file arrives and nothing below it jumps as the wall fills. */
     aspect-ratio: 3/4;
+    break-inside: avoid;
+    margin-bottom: clamp(10px, 1.6vw, 18px);
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--line);
@@ -1529,30 +1536,24 @@
       radial-gradient(120% 90% at 30% 20%, rgba(234, 197, 108, .26), transparent 60%),
       radial-gradient(120% 90% at 80% 90%, rgba(151, 70, 91, .32), transparent 60%);
     filter: blur(17px) saturate(.7);
+    /* The blur samples past the edges, which would otherwise show as a
+       transparent rim; the overscale hides it. */
     transform: scale(1.08);
     transition: filter .7s var(--ease), transform .7s var(--ease);
   }
 
-  .tile .lbl {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: .22em;
-    color: #fff;
-    text-transform: uppercase;
-    opacity: .85;
-    padding: 6px 10px;
+  .tile .ph img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Fades in on decode, so a photo arriving mid-scroll does not pop. */
+    opacity: 0;
+    transition: opacity .5s var(--ease);
   }
 
-  .tile .state {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    font-family: var(--font-mono);
-    font-size: 8.5px;
-    letter-spacing: .24em;
-    color: var(--gold);
-    text-transform: uppercase;
-    z-index: 2;
+  .tile .ph img.ready {
+    opacity: 1;
   }
 
   .tile .flash {
@@ -2504,6 +2505,14 @@
       opacity: 1 !important;
       transform: none !important;
     }
+
+    /* The gallery still collapses from blur to photo — that is the content,
+       not decoration — it simply does so without the travel. */
+    .tile,
+    .tile .ph,
+    .tile .ph img {
+      transition: none !important;
+    }
   }
 </style>
 
@@ -3009,7 +3018,7 @@
             </div>
             <div class="cap-k">2026 · Chennai</div>
             <div class="cap-t display">Under The Mandapam</div>
-            <div class="cap-s">The ultimate interference, under the pillars of<br>Bright & Dark bands of the lifelong
+            <div class="cap-s">The ultimate interference, under the pillars of <br>Bright & Dark bands of the lifelong
               journey.</div>
           </div>
         </div>
@@ -3142,8 +3151,7 @@
       <div class="chapter-head">
         <div class="eyebrow rise">The coherence gallery</div>
         <h2 class="chapter-title display rise">Observe To Bring <em>Into Focus</em></h2>
-        <p class="chapter-sub rise">Every frame waits in a blur of every possible moment. Rest on a tile — desktop — or
-          let it cross center on mobile, and it collapses into a single sharp memory.</p>
+        <p class="chapter-sub rise">A few of the moments that turned two paths into one.</p>
       </div>
       <div class="grid" id="galleryGrid"></div>
     </section>
@@ -5055,16 +5063,59 @@
     /* ============================================================
        4. GALLERY — observe to focus (hover on desktop, IO on mobile)
        ============================================================ */
-    var galleryData = ["First equation", "The divergence", "Two cities", "Her call sheet", "His whiteboard", "Reconvergence"];
+    /* The photographs. `w`/`h` are the real pixel dimensions of the original —
+       they set each tile's shape up front, so the column packs correctly and
+       nothing shifts as the files arrive. `f` is the base filename; the three
+       sizes are gallery/opt/<f>-400.jpg, -760.jpg and the original.
+
+       Adding or replacing a photo: drop it in gallery/, run
+       gallery/build-variants.ps1 to make the small copies, and add a line
+       here. Nothing else needs touching. */
+    var galleryData = [
+      { f: "thirumalai-pooja-1", ext: "jpeg", w: 960, h: 1280, alt: "Thirumalai and Pooja laughing together while choosing silks" },
+      { f: "thirumalai-pooja-2", ext: "jpeg", w: 1280, h: 854, alt: "Thirumalai taking Pooja's hand at the ceremony, both in garlands" },
+      { f: "thirumalai-pooja-3", ext: "jpeg", w: 1280, h: 854, alt: "Thirumalai smiling with a bouquet of red roses as Pooja hands it over" },
+      { f: "thirumalai-pooja-4", ext: "jpeg", w: 854, h: 1280, alt: "Pooja looking up at Thirumalai in low light, close together" },
+      { f: "thirumalai-pooja-5", ext: "jpeg", w: 960, h: 1280, alt: "Thirumalai and Pooja mid-laugh, standing side by side" }
+    ];
     var gGrid = document.getElementById("galleryGrid");
-    galleryData.forEach(function (cap) {
-      var el = document.createElement("div"); el.className = "tile"; el.tabIndex = 0; el.setAttribute("data-cursor", "observe");
-      el.innerHTML = '<div class="ph"><span class="lbl">[PHOTO PLACEHOLDER]</span></div><div class="state">superposed</div><div class="flash"></div>';
-      function ob() { el.classList.add("observed"); el.querySelector(".state").textContent = "in focus"; el.querySelector(".lbl").textContent = cap; }
-      function un() { if (matchMedia("(hover:hover)").matches) { el.classList.remove("observed"); el.querySelector(".state").textContent = "superposed"; el.querySelector(".lbl").textContent = "[PHOTO PLACEHOLDER]"; } }
-      el.addEventListener("pointerenter", ob); el.addEventListener("pointerleave", un); el.addEventListener("click", ob); el.addEventListener("focus", ob);
+    var HOVERS = matchMedia("(hover:hover)").matches;
+    galleryData.forEach(function (g) {
+      var el = document.createElement("div");
+      el.className = "tile"; el.tabIndex = 0; el.setAttribute("data-cursor", "observe");
+      /* The tile's shape is the photograph's shape — reserved before the file
+         loads, so the page below never jumps. */
+      el.style.aspectRatio = g.w + " / " + g.h;
+
+      /* Three widths, and the browser takes the one that suits the screen it
+         is actually on: a phone never pulls the laptop's file. `sizes` mirrors
+         the two-then-three column layout above. */
+      var srcset = "gallery/opt/" + g.f + "-400.jpg 400w, gallery/opt/" + g.f + "-760.jpg 760w, "
+        + "gallery/" + g.f + "." + g.ext + " " + g.w + "w";
+      /* No caption, no status line — the photograph carries itself. `alt` stays
+         for screen readers; it is never drawn. */
+      el.innerHTML =
+        '<div class="ph"><img src="gallery/opt/' + g.f + '-760.jpg" srcset="' + srcset + '"'
+        + ' sizes="(max-width: 820px) 44vw, 340px" width="' + g.w + '" height="' + g.h + '"'
+        + ' alt="' + escapeHTML(g.alt) + '" loading="lazy" decoding="async"></div>'
+        + '<div class="flash"></div>';
+
+      /* Fade the photo in once it has actually decoded. Images restored from
+         cache can be complete before this runs, so check rather than only
+         listening. */
+      var img = el.querySelector("img");
+      function ready() { img.classList.add("ready"); }
+      if (img.complete && img.naturalWidth) ready(); else img.addEventListener("load", ready, { once: true });
+      /* A photo that cannot load leaves the tile as the gradient it started
+         as, rather than a broken-image icon in the middle of the wall. */
+      img.addEventListener("error", function () { img.remove(); }, { once: true });
+
+      function ob() { el.classList.add("observed"); }
+      function un() { if (HOVERS) el.classList.remove("observed"); }
+      el.addEventListener("pointerenter", ob); el.addEventListener("pointerleave", un);
+      el.addEventListener("click", ob); el.addEventListener("focus", ob);
       gGrid.appendChild(el);
-      if (!matchMedia("(hover:hover)").matches) {
+      if (!HOVERS) {
         var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { ob(); io.unobserve(el); } }); }, { threshold: .6 });
         io.observe(el);
       }
