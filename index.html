@@ -796,7 +796,7 @@
 
   .node .cap-s {
     font-family: var(--font-body);
-    font-weight: 450;
+    font-weight: 420;
     font-size: 15px;
     color: var(--ink-dim);
     line-height: 1.55;
@@ -5575,6 +5575,17 @@
       var raw = (err && err.message) ? String(err.message) : "";
       var key = null;
       for (var k in WALL_ERRORS) if (raw.indexOf(k) >= 0) { key = k; break; }
+      /* The database has the last word on the limit. If it refuses a claim the
+         page believed there was room for, it is the page's number that is stale
+         — an older schema is still live, or max_picks() could not be read. Take
+         the refusal as the answer: correct the count on the spot and switch the
+         drop button off. Without this the page goes on promising a pick that can
+         never land, and the guest is left tapping at a limit it will not admit
+         to. It heals itself the moment the schema is re-run. */
+      if (key === "claim_limit" && myClaims.length > 0 && myClaims.length < MAX_PICKS) {
+        MAX_PICKS = myClaims.length;
+        renderQueue();
+      }
       note(key ? WALL_ERRORS[key] : "Could not reach the wall — check your connection and try again.", true);
     }
 
@@ -5718,12 +5729,19 @@
        an error they did not earn. Holding the gate shut until the first write
        answers keeps that from happening at all. */
     var wallBusy = false;
+    function freeWall() { wallBusy = false; queueEl.classList.remove("busy"); }
     function writeWall(op) {
       if (wallBusy) return;
       wallBusy = true;
       queueEl.classList.add("busy");
-      op().then(function () { wallBusy = false; queueEl.classList.remove("busy"); return wakeWall(); },
-        function (err) { wallBusy = false; queueEl.classList.remove("busy"); wallError(err); });
+      op().then(function () {
+        /* Stay shut until the re-read lands, not merely until the write answers.
+           In the gap between the two, myClaims is still the list from before the
+           write — a second tap would be measured against a count that has already
+           moved and would spend a pick the guest no longer has, earning them a
+           refusal from the database for something the page let them do. */
+        return wakeWall().then(freeWall, freeWall);
+      }, function (err) { freeWall(); wallError(err); });
     }
 
     /* Staying in sync. The page asks the wall for news rather than holding a
@@ -5814,7 +5832,17 @@
       djWall.limit().then(function (n) {
         n = parseInt(n, 10);
         if (n > 0 && n !== MAX_PICKS) { MAX_PICKS = n; renderQueue(); note(); }
-      }, function () { });
+      }, function (err) {
+        /* Not fatal — the fallback stands and the wall still works. But if the
+           live database predates max_picks(), the fallback is a guess that the
+           database may not honour, and the guest meets a limit the page never
+           showed them. Say so here rather than nowhere: re-running
+           supabase/schema.sql is the fix. */
+        if (window.console && console.warn) {
+          console.warn("[dj wall] could not read max_picks() from the database — falling back to "
+            + MAX_PICKS + " picks. Re-run supabase/schema.sql if the two disagree.", err);
+        }
+      });
     }
 
     renderQueue(); note();
