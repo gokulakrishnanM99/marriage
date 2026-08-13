@@ -553,17 +553,16 @@
     font-family: var(--font-display);
     font-style: italic;
     color: var(--ink);
-    font-size: clamp(16px, 2.4vw, 24px);
-    max-width: 40ch;
+    font-size: clamp(19px, 2.9vw, 29px);
+    max-width: 62ch;
     opacity: 0;
     animation: fadeUp 1.2s 1.3s var(--ease) forwards;
-    text-wrap: balance;
-    line-height: 1.55;
+    line-height: 1.5;
   }
 
   .hero-meta {
     font-family: var(--font-mono);
-    font-size: clamp(9.5px, 1.4vw, 12px);
+    font-size: clamp(11px, 1.6vw, 14px);
     letter-spacing: .3em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -574,6 +573,9 @@
   .hero-meta b {
     color: var(--gold);
     font-weight: 400;
+    /* The date carries the card: twice the size of the line it sits in. */
+    font-size: 1.72em;
+    letter-spacing: .18em;
   }
 
   .scrollcue {
@@ -586,13 +588,30 @@
     animation: fadeUp 1s 1.7s forwards;
   }
 
+  /* A shooting star falls down the cue: a faint gold rail it travels along, and a
+     comet — glowing head, gradient tail — that streaks down it and burns out. */
   .scrollcue .bar {
     display: block;
+    position: relative;
     width: 1px;
-    height: 46px;
+    height: 52px;
     margin: 12px auto 0;
-    background: linear-gradient(var(--gold), transparent);
-    animation: cue 2.2s ease-in-out infinite;
+    overflow: hidden;
+    background: linear-gradient(rgba(234, 197, 108, .22), rgba(234, 197, 108, 0));
+  }
+
+  .scrollcue .bar::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 18px;
+    margin-left: -1px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, rgba(234, 197, 108, 0), var(--gold) 78%, #FFE7C4);
+    box-shadow: 0 0 9px 2px rgba(234, 197, 108, .8), 0 0 20px 4px rgba(234, 197, 108, .3);
+    animation: shootingCue 2.2s cubic-bezier(.42, 0, .58, 1) infinite;
   }
 
   /* ===================== SECTION SCAFFOLD ===================== */
@@ -658,8 +677,13 @@
     pointer-events: none;
   }
 
+  .journey-label .eyebrow {
+    font-size: clamp(12px, 1.7vw, 15px);
+  }
+
   .journey-label .chapter-title {
-    font-size: clamp(26px, 5vw, 58px);
+    font-size: clamp(30px, 5.7vw, 66px);
+    letter-spacing: .04em;
     margin: .28em 0 .16em;
     will-change: opacity, transform;
   }
@@ -709,7 +733,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: min(70vw, 232px);
+    width: min(70vw, 450px);
+    text-align: center;
     opacity: 0;
     z-index: 4;
     transition: opacity .7s var(--ease), transform .9s var(--ease);
@@ -742,8 +767,8 @@
 
   .node .cap-k {
     font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 9.5px;
+    font-weight: 500;
+    font-size: 11.5px;
     letter-spacing: .28em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -751,8 +776,8 @@
 
   .node .cap-t {
     font-family: var(--font-display);
-    font-weight: 500;
-    font-size: clamp(19px, 2.6vw, 30px);
+    font-weight: 450;
+    font-size: clamp(30px, 4.2vw, 40px);
     letter-spacing: .01em;
     margin: .22em 0 .2em;
     line-height: 1.05;
@@ -771,11 +796,25 @@
 
   .node .cap-s {
     font-family: var(--font-body);
-    font-weight: 300;
-    font-size: 12.5px;
+    font-weight: 400;
+    font-size: 20px;
     color: var(--ink-dim);
     line-height: 1.55;
-    max-width: 210px;
+    max-width: 500px;
+    text-align: center;
+  }
+
+  /* On a short viewport the rail sits closer to the edges — pull the enlarged
+     captions back in so a wrapped title cannot run under the progress bar. */
+  @media (max-height: 620px) {
+
+    .node .cap-t {
+      font-size: clamp(24px, 3.4vw, 40px);
+    }
+
+    .node .cap-s {
+      font-size: 12.5px;
+    }
   }
 
   .node.revealed .cap-t {
@@ -1125,7 +1164,7 @@
     display: block;
     font-family: var(--font-mono);
     font-weight: 400;
-    font-size: clamp(10px, 1.7vw, 12px);
+    font-size: clamp(9px, 2.7vw, 10px);
     letter-spacing: .38em;
     text-transform: uppercase;
     color: var(--gold);
@@ -1164,7 +1203,7 @@
 
   .cell .k {
     font-family: var(--font-mono);
-    font-size: 9.5px;
+    font-size: 15px;
     letter-spacing: .3em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -1173,7 +1212,7 @@
   .cell .v {
     font-family: var(--font-display);
     font-weight: 500;
-    font-size: clamp(18px, 2.6vw, 26px);
+    font-size: clamp(24px, 3.2vw, 33px);
     color: #fff;
     margin-top: .4em;
     letter-spacing: .01em;
@@ -1191,7 +1230,7 @@
   /* Second line of a cell: the time under its date, the city under the hall. */
   .cell .v-sub {
     font-family: var(--font-mono);
-    font-size: clamp(10.5px, 1.35vw, 12.5px);
+    font-size: clamp(15px, 1.7vw, 18px);
     letter-spacing: .12em;
     color: var(--gold);
     margin-top: .72em;
@@ -2326,19 +2365,23 @@
     }
   }
 
-  @keyframes cue {
-
-    0%,
-    100% {
-      transform: scaleY(.4);
-      opacity: .4;
-      transform-origin: top;
+  @keyframes shootingCue {
+    0% {
+      transform: translateY(-22px);
+      opacity: 0;
     }
 
-    50% {
-      transform: scaleY(1);
+    18% {
       opacity: 1;
-      transform-origin: top;
+    }
+
+    72% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateY(52px);
+      opacity: 0;
     }
   }
 
@@ -2451,7 +2494,8 @@
     #orbit-inner,
     .floor-tile,
     .star-core,
-    .scrollcue .bar {
+    .scrollcue .bar,
+    .scrollcue .bar::after {
       animation: none !important;
     }
 
@@ -2493,9 +2537,9 @@
           <span class="name" data-split>Pooja</span>
         </h1>
 
-        <p class="tagline">Two paths through life, each finding its own way, yet converging at one bright point, on one
-          beautiful day.</p>
-        <div class="hero-meta">Thirumalai &amp; Pooja · <b id="heroDate">30 &amp 31 Aug 2026</b> · Chennai</div>
+        <p class="tagline">Two paths through life, each finding its own way,<br>yet converging at one bright point, on
+          one beautiful day.</p>
+        <div class="hero-meta"><b id="heroDate">30 &amp 31 Aug 2026</b> · Chennai</div>
         <div class="scrollcue">Scroll to travel<span class="bar"></span></div>
       </div>
     </section>
@@ -2541,55 +2585,55 @@
               <mask id="laneNotch" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="700">
                 <rect x="0" y="0" width="2600" height="700" fill="#fff" />
                 <!-- her (gold) icons -->
-                <circle cx="760" cy="182" r="36" fill="url(#notchGrad)" />
-                <circle cx="1240" cy="178" r="36" fill="url(#notchGrad)" />
-                <circle cx="1780" cy="184" r="36" fill="url(#notchGrad)" />
+                <circle cx="659" cy="182" r="36" fill="url(#notchGrad)" />
+                <circle cx="1160" cy="178" r="36" fill="url(#notchGrad)" />
+                <circle cx="1496" cy="184" r="36" fill="url(#notchGrad)" />
                 <!-- his (wine) icons -->
-                <circle cx="760" cy="528" r="36" fill="url(#notchGrad)" />
-                <circle cx="1180" cy="525" r="36" fill="url(#notchGrad)" />
-                <circle cx="1560" cy="520" r="36" fill="url(#notchGrad)" />
-                <circle cx="1980" cy="524" r="36" fill="url(#notchGrad)" />
+                <circle cx="659" cy="528" r="36" fill="url(#notchGrad)" />
+                <circle cx="1004" cy="525" r="36" fill="url(#notchGrad)" />
+                <circle cx="1315" cy="520" r="36" fill="url(#notchGrad)" />
+                <circle cx="1660" cy="524" r="36" fill="url(#notchGrad)" />
               </mask>
             </defs>
 
             <g stroke="#EAC56C" fill="none" opacity=".14" filter="url(#glowSoft)">
-              <path d="M980,182 C1040,120 1090,120 1140,152" />
-              <path d="M1560,184 C1620,244 1660,244 1710,214" />
+              <path d="M840,182 C889,120 930,120 971,152" />
+              <path d="M1315,184 C1364,244 1397,244 1438,214" />
             </g>
             <g stroke="#E85D75" fill="none" opacity=".35" filter="url(#glowSoft)">
-              <path d="M980,528 C1040,588 1090,588 1140,556" />
-              <path d="M1560,524 C1620,464 1660,464 1710,494" />
+              <path d="M840,528 C889,588 930,588 971,556" />
+              <path d="M1315,524 C1364,464 1397,464 1438,494" />
             </g>
 
             <!-- single white beam entering the slit -->
-            <path id="originTrail" d="M200,350 C260,348 330,352 423,350" fill="none" stroke="#eef0ff" stroke-width="5"
+            <path id="originTrail" d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="5"
               filter="url(#glowBig)" opacity=".9" />
 
             <!-- HER ray — GOLD -->
             <path id="laneHerGlow"
-              d="M431,317 C540,309 640,244 760,182 C1060,182 1420,178 1780,184 C2060,188 2210,255 2465,350" fill="none"
+              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
               stroke="#EAC56C" stroke-width="12" opacity=".1" filter="url(#glowBig)" mask="url(#laneNotch)" />
             <path id="laneHer"
-              d="M431,317 C540,309 640,244 760,182 C1060,182 1420,178 1780,184 C2060,188 2210,255 2465,350" fill="none"
+              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
               stroke="#EAC56C" stroke-width="3.5" filter="url(#glowSoft)" mask="url(#laneNotch)" />
 
             <!-- HIS ray — WINE RED -->
             <path id="laneHisGlow"
-              d="M431,388 C540,398 640,456 760,528 C1060,528 1500,532 1980,524 C2200,520 2300,455 2465,350" fill="none"
+              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
               stroke="#E85D75" stroke-width="14" opacity=".25" filter="url(#glowBig)" mask="url(#laneNotch)" />
             <path id="laneHis"
-              d="M431,388 C540,398 640,456 760,528 C1060,528 1500,532 1980,524 C2200,520 2300,455 2465,350" fill="none"
+              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
               stroke="#E85D75" stroke-width="4.2" stroke-dasharray="8 12" filter="url(#glowSoft)"
               mask="url(#laneNotch)" />
 
             <!-- double slit plate -->
             <g stroke="#8f89a3" stroke-width="1">
-              <rect x="425" y="234" width="2" height="75" rx="2.5" fill="#cbc4d8" />
-              <rect x="425" y="325" width="2" height="55" rx="2" fill="#cbc4d8" />
-              <rect x="425" y="396" width="2" height="75" rx="2.5" fill="#cbc4d8" />
+              <rect x="385" y="234" width="2" height="75" rx="2.5" fill="#cbc4d8" />
+              <rect x="385" y="325" width="2" height="55" rx="2" fill="#cbc4d8" />
+              <rect x="385" y="396" width="2" height="75" rx="2.5" fill="#cbc4d8" />
             </g>
-            <circle cx="428" cy="317" r="3.5" fill="#EAC56C" filter="url(#glowBig)" />
-            <circle cx="428" cy="388" r="3.5" fill="#E85D75" filter="url(#glowBig)" />
+            <circle cx="387" cy="317" r="3.5" fill="#EAC56C" filter="url(#glowBig)" />
+            <circle cx="387" cy="388" r="3.5" fill="#E85D75" filter="url(#glowBig)" />
 
             <!-- ─── Mandapam Stage: pillars encoding the double-slit interference pattern ─── -->
             <defs>
@@ -2612,7 +2656,7 @@
                 <stop offset="1" stop-color="#EAC56C" stop-opacity="0" />
               </radialGradient>
             </defs>
-            <g id="mandapam" filter="url(#glowSoft)" transform="translate(2465 416) scale(0.96)">
+            <g id="mandapam" filter="url(#glowSoft)" transform="translate(2057 416) scale(0.96)">
               <!-- convergence bloom halo behind the stage (top of stage aligns with the beam convergence line at absolute y=350) -->
               <circle cx="0" cy="-30" r="140" fill="url(#stageBloom)" />
               <!-- Roof canopy: temple pediment (compact) -->
@@ -2738,11 +2782,10 @@
             </div>
             <div class="cap-k">2015 · Chennai</div>
             <div class="cap-t display">KCG College</div>
-            <div class="cap-s">The place they should have met - in some parallel world, they did. In this one, not yet.
-            </div>
+            <div class="cap-s">The place they should have met, maybe in a<br>parallel world. In this one, not yet.</div>
           </div>
 
-          <div class="node up" data-x="760" data-y="182">
+          <div class="node up" data-x="659" data-y="182">
             <div class="glyph">
               <svg class="glyph-icon gold" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- Stethoscope: proper headband + earpieces + Y-tube + chestpiece -->
@@ -2767,7 +2810,7 @@
             <div class="cap-t gold display">MBBS</div>
             <div class="cap-s">The Dream path begins.</div>
           </div>
-          <div class="node up" data-x="1240" data-y="178">
+          <div class="node up" data-x="1160" data-y="178">
             <div class="glyph">
               <svg class="glyph-icon gold" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- INI-CET: Medical Caduceus — Winged Staff with Twin Serpents -->
@@ -2824,7 +2867,7 @@
             <div class="cap-t gold display">INI-CET</div>
             <div class="cap-s">A breakthrough over every challenge.</div>
           </div>
-          <div class="node up" data-x="1780" data-y="184">
+          <div class="node up" data-x="1496" data-y="184">
             <div class="glyph">
               <svg class="glyph-icon gold monitor" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- Anaesthesia vitals monitor: screen frame with EKG trace -->
@@ -2836,11 +2879,11 @@
               </svg>
             </div>
             <div class="cap-k">Pooja's path · Hyderabad</div>
-            <div class="cap-t gold display">AIIMS — Anaesthesia</div>
+            <div class="cap-t gold display">AIIMS - Anaesthesia</div>
             <div class="cap-s">In induction.</div>
           </div>
 
-          <div class="node" data-x="760" data-y="528">
+          <div class="node" data-x="659" data-y="528">
             <div class="glyph">
               <svg class="glyph-icon wine" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- Amazon: clean 3/4-view cardboard box + the signature smile arrow (no tape) -->
@@ -2870,7 +2913,7 @@
             <div class="cap-t wine display">Amazon</div>
             <div class="cap-s">Beginning of the inspirations yet to come.</div>
           </div>
-          <div class="node" data-x="1180" data-y="525">
+          <div class="node" data-x="1004" data-y="525">
             <div class="glyph">
               <svg class="glyph-icon wine" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- GATE: 3/4 gear resting on a book. Gear opening faces DOWN, flush with book cover. -->
@@ -2908,9 +2951,9 @@
             </div>
             <div class="cap-k">Thiru's path</div>
             <div class="cap-t wine display">GATE</div>
-            <div class="cap-s">"Namma Jeichitom Maara" moment | We won, Maara.</div>
+            <div class="cap-s">"Namma Jeichitom Maara" moment ("We won, Maara")</div>
           </div>
-          <div class="node" data-x="1560" data-y="520">
+          <div class="node" data-x="1315" data-y="520">
             <div class="glyph">
               <svg class="glyph-icon wine" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- IIT Quantum: Bloch sphere with spinning orbit ellipses + state marker -->
@@ -2930,10 +2973,10 @@
               </svg>
             </div>
             <div class="cap-k">Thiru's path · Jodhpur</div>
-            <div class="cap-t wine display">IIT — Quantum Engg.</div>
+            <div class="cap-t wine display">IITJ - Quantum Engg.</div>
             <div class="cap-s">Settling into superPosition.</div>
           </div>
-          <div class="node" data-x="1980" data-y="524">
+          <div class="node" data-x="1660" data-y="524">
             <div class="glyph">
               <svg class="glyph-icon wine" viewBox="0 0 56 56" aria-hidden="true">
                 <!-- Quantum Engineer: Dirac ket |01⟩ notation -->
@@ -2951,7 +2994,7 @@
             <div class="cap-s">In the phase of Entanglement.</div>
           </div>
 
-          <div class="node up" data-x="2465" data-y="350">
+          <div class="node up" data-x="2057" data-y="350">
             <div class="glyph">
               <svg class="glyph-icon" viewBox="0 0 56 56" aria-hidden="true"
                 style="color:#FFE7C4;filter:drop-shadow(0 0 18px rgba(255,231,196,.7));">
@@ -2965,7 +3008,7 @@
             </div>
             <div class="cap-k">2026 · Chennai</div>
             <div class="cap-t display">Under The Mandapam</div>
-            <div class="cap-s">The ultimate interference under the pillars of Bright and Dark bands of the lifelong
+            <div class="cap-s">The ultimate interference under the pillars of<br>Bright and Dark bands of the lifelong
               journey.</div>
           </div>
         </div>
@@ -2997,7 +3040,7 @@
             </div>
             <div class="k">Reception</div>
             <div class="v display">30<sup>th</sup> August 2026</div>
-            <div class="v-sub">Sunday · 6:00 PM onwards</div>
+            <div class="v-sub">Sunday<br>6:00 PM onwards</div>
           </div>
           <div class="cell">
             <div class="cell-ico" aria-hidden="true">
@@ -3016,7 +3059,7 @@
             </div>
             <div class="k">Wedding</div>
             <div class="v display">31<sup>st</sup> August 2026</div>
-            <div class="v-sub">Monday · 6:00 – 7:30 AM</div>
+            <div class="v-sub">Monday<br>6:00 – 7:30 AM</div>
           </div>
           <div class="cell">
             <div class="cell-ico" aria-hidden="true">
@@ -4803,11 +4846,11 @@
        with the diya at the centre of the screen and closes with the mandapam at
        the centre of the screen, whatever the screen's shape — which is what
        makes it land the same on a tall phone and a wide laptop. Both are free to
-       fall outside the track's own width: the rail only occupies x 200–2465 of a
+       fall outside the track's own width: the rail only occupies x 200–2057 of a
        2600 canvas, so either end just reveals empty sky, which is where the beam
        is born and where it arrives. */
     var travelFrom = 0, travelTo = 0;
-    var ORIGIN_X = 200, MANDAPAM_X = 2465;   // the diya and the mandapam, in SVG user units
+    var ORIGIN_X = 200, MANDAPAM_X = 2057;   // the diya and the mandapam, in SVG user units
 
     function layoutJourney() {
       /* Measure the pinned box, not the window. On a phone they differ by the
@@ -5492,7 +5535,7 @@
     var songs = [], myClaims = [], wallLoaded = false, wallSig = "", knownIds = [], drawnIds = [];
     var djNote = document.getElementById("djNote");
     var NOTE_BASE = djWall.shared
-      ? "A few picks each, shared with everyone. Tap a song already up there to add your weight to it."
+      ? "A few picks each, shared with everyone. Tap a song already up there to add your to make it in top."
       : "Saved on this device for now — the shared wall switches on once the database is connected.";
 
     function dotHue(i) { return (i % 2 === 0) ? DROP_GOLD : DROP_RED; }
