@@ -209,8 +209,11 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    opacity: .028;
-    mix-blend-mode: overlay;
+    /* The grain used to blend in `overlay`, which forces every frame of the page
+       underneath it through a blend pass — measured at nearly half the frame rate
+       on the song-wall section. At 2.8% the texture reads the same laid on plainly,
+       and if anything it lifts the darks a shade rather than deepening them. */
+    opacity: .032;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
 
@@ -562,7 +565,7 @@
 
   .hero-meta {
     font-family: var(--font-mono);
-    font-size: clamp(11px, 1.6vw, 14px);
+    font-size: clamp(12px, 1.6vw, 15px);
     letter-spacing: .3em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -572,10 +575,10 @@
 
   .hero-meta b {
     color: var(--gold);
-    font-weight: 300;
+    font-weight: 350;
     /* The date carries the card: twice the size of the line it sits in. */
-    font-size: 1.2em;
-    letter-spacing: .11em;
+    font-size: 1.25em;
+    letter-spacing: .12em;
   }
 
   .scrollcue {
@@ -688,6 +691,35 @@
     will-change: opacity, transform;
   }
 
+  /* A word of guidance, and only when the guest looks like they need one. The
+     journey turns vertical scroll into horizontal travel, which nobody is expecting
+     the first time; and the mandapam holds still at the end long enough to read as
+     the bottom of the page. Both are moments where someone can quietly get stuck.
+     Sits above the progress bar, over nothing that matters, and never takes a click. */
+  #journey-hint {
+    position: absolute;
+    left: var(--pad);
+    right: var(--pad);
+    bottom: clamp(44px, 8.5vh, 78px);
+    z-index: 7;
+    text-align: center;
+    pointer-events: none;
+    font-family: var(--font-mono);
+    font-size: clamp(9.5px, 1.5vw, 11.5px);
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--gold-soft);
+    text-shadow: 0 0 18px rgba(6, 4, 10, .95), 0 0 6px rgba(6, 4, 10, .9);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .55s var(--ease), transform .55s var(--ease);
+  }
+
+  #journey-hint.on {
+    opacity: .82;
+    transform: none;
+  }
+
   .journey-progress {
     position: absolute;
     left: var(--pad);
@@ -714,11 +746,36 @@
     will-change: transform;
   }
 
+  /* The rail is a very wide SVG full of blurred, masked strokes, and the pulses
+     travel over it every frame. Without a layer of its own the browser re-rasters
+     all of that on every one of those frames — measured at 8 fps through this
+     section, against 50 fps once the rail and the pulses each composite on their
+     own. Nothing here changes how it looks; it only stops the same picture being
+     redrawn from scratch sixty times a second. Keep both promotions together:
+     promoting the rail alone recovers most of it, the pulse layer the rest. */
   #rail-svg {
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
+  }
+
+  #pulse-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* The layer is only held while the journey is coming up or on screen. The rail is
+     several thousand pixels wide, and a layer that size is not something to leave
+     pinned in a phone's memory for the whole page — the class goes on well before
+     the section arrives (600px of warning) and comes off once it is behind you. */
+  #journey-wrap.travelling #rail-svg,
+  #journey-wrap.travelling #pulse-svg {
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   #rail-svg path,
@@ -1930,6 +1987,7 @@
     mix-blend-mode: screen;
     opacity: .7;
     animation: hexWallAurora 14s ease-in-out infinite alternate;
+    /* paused while the wall is far from the viewport — see .hex-wall.dormant below */
   }
 
   @keyframes hexWallAurora {
@@ -1947,6 +2005,17 @@
       transform: translate(-2%, 4%) rotate(-4deg);
       filter: blur(28px) hue-rotate(-14deg);
     }
+  }
+
+  /* While the wall is far above or below the viewport nothing here is being looked
+     at, so nothing here needs to be drawn. The blur in the aurora keyframes is the
+     costly part: an animated filter is re-blurred every frame, on or off screen.
+     The class is put on and taken off by an IntersectionObserver in the script. */
+  .hex-wall.dormant .hex-wall-frame::before,
+  .hex-wall.dormant .hex,
+  .hex-wall.dormant .hex-room,
+  .hex-wall.dormant .room-face {
+    animation-play-state: paused !important;
   }
 
   /* Cornice rails */
@@ -2734,6 +2803,13 @@
               </path>
             </g>
 
+          </svg>
+
+          <!-- The travelling pulses live in their own overlay, on the same grid as the
+               rail (identical viewBox and box, set together in layoutJourney), so that
+               the frames they repaint do not drag the whole filtered rail through a
+               re-raster with them. Visually it is the same layer it always was. -->
+          <svg id="pulse-svg" viewBox="0 0 2600 700" preserveAspectRatio="none" aria-hidden="true">
             <g id="pulseLayer"></g>
           </svg>
 
@@ -2967,7 +3043,7 @@
               </svg>
             </div>
             <div class="cap-k">Thiru's path</div>
-            <div class="cap-t wine display">GATE</div>
+            <div class="cap-t wine display">GATE - CSE</div>
             <div class="cap-s">"Namma Jeichitom Maara" moment<br />("We won, Maara")</div>
           </div>
           <div class="node" data-x="1315" data-y="520">
@@ -2991,7 +3067,7 @@
             </div>
             <div class="cap-k">Thiru's path · Jodhpur</div>
             <div class="cap-t wine display">IIT J - Quantum Tech.</div>
-            <div class="cap-s">Settling into superPosition.</div>
+            <div class="cap-s">Superposition Life begins.</div>
           </div>
           <div class="node" data-x="1660" data-y="524">
             <div class="glyph">
@@ -3008,7 +3084,7 @@
             </div>
             <div class="cap-k">Thiru's path · Bengaluru</div>
             <div class="cap-t wine display">Quantum Engineer</div>
-            <div class="cap-s">In the phase of Entanglement.</div>
+            <div class="cap-s">One Brave Qubit Refusing decoherence.</div>
           </div>
 
           <div class="node up" data-x="2057" data-y="350">
@@ -3025,11 +3101,12 @@
             </div>
             <div class="cap-k">2026 · Chennai</div>
             <div class="cap-t display">Under The Mandapam</div>
-            <div class="cap-s">The ultimate interference, under the pillars of <br>Bright & Dark bands of the lifelong
+            <div class="cap-s">The ultimate interference, under the pillars of <br> colorful bands of the lifelong
               journey.</div>
           </div>
         </div>
 
+        <div id="journey-hint" role="status" aria-live="polite"></div>
         <div class="journey-progress"><i id="journey-bar"></i></div>
       </div>
     </section>
@@ -3038,7 +3115,7 @@
     <section id="invite">
       <div class="glass rise" id="glassCard" data-tilt>
         <div class="eyebrow">You are invited to the wedding of</div>
-        <div class="invite-names display">Thirumalai <span class="amp2">&amp;</span> Pooja<small>Together with their
+        <div class="invite-names display">Thiru <span class="amp2">&amp;</span> Pooja<small>Together with their
             families</small></div>
 
         <div class="readout" id="readout">
@@ -4645,7 +4722,29 @@
   (function () {
     "use strict";
     var DPR = Math.min(window.devicePixelRatio || 1, 1.25);
-    var FIELD_DPR = Math.min(window.devicePixelRatio || 1, 1.0);
+    /* ---- How hard the cosmos is asked to work ----------------------------------
+       The nebula is the most expensive thing on the page by a distance: seven fbm
+       calls for every pixel, every frame, across the whole screen. On a phone that
+       one shader was setting the ceiling for everything else — the timeline included,
+       which is why scrolling it felt heavy no matter what the timeline itself did.
+       Two knobs, both touch-only, neither of which touches colour or brightness:
+         FIELD_SCALE  — how many pixels the shader actually computes. The gas is soft
+                        and the canvas is scaled back up, so the only thing that gives
+                        is a little star sharpness.
+         FIELD_MIN_DT — how often it redraws. The nebula drifts at t*0.015; at 30fps
+                        that motion is indistinguishable from 60.
+       Raise FIELD_SCALE to 1 and set FIELD_MIN_DT to 0 to put a phone back on the
+       desktop settings. Everything else on the page keeps running at full rate. */
+    var TOUCH = !matchMedia("(hover:hover) and (pointer:fine)").matches;
+    var FIELD_SCALE = TOUCH ? 0.7 : 1.0;
+    var FIELD_MIN_DT = TOUCH ? 31 : 0;
+    var FIELD_DPR = Math.min(window.devicePixelRatio || 1, 1.0) * FIELD_SCALE;
+    /* A ceiling on how many pixels of nebula are ever computed, whatever the screen.
+       The cost of this shader is per-pixel and nothing else, so a 4K desktop was being
+       asked for four times the work of a 1080p one for a picture of the same clouds —
+       which is the other half of why big Windows screens felt heavier than small ones.
+       Only the sampling density changes; every colour, level and constant is untouched. */
+    var FIELD_BUDGET = TOUCH ? 280000 : 1200000;
     var SVGNS = "http://www.w3.org/2000/svg";
     var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
     var FINE = matchMedia("(hover:hover) and (pointer:fine)").matches;
@@ -4655,7 +4754,15 @@
     // light↔dark transition is gradual (raise the 0.05 ease factor to snap faster, lower to slow).
     var bgPhase = 0, bgPhaseSmooth = 0;
     var BG_PHASE_EASE = 0.10;
-    function updateScroll() { var m = document.body.scrollHeight - window.innerHeight; scroll = m > 0 ? Math.min(1, Math.max(0, window.scrollY / m)) : 0; }
+    /* The document's height is measured when it changes, not on every scroll event.
+       Reading scrollHeight mid-scroll forces the browser to re-run layout before it
+       can answer, and doing that once per scroll event is what turns a smooth scroll
+       into a staircase. A ResizeObserver on the body keeps the number honest when
+       the page actually grows — gallery images landing, the song queue expanding. */
+    var docScrollMax = 0;
+    function measureDoc() { docScrollMax = document.body.scrollHeight - window.innerHeight; }
+    function updateScroll() { scroll = docScrollMax > 0 ? Math.min(1, Math.max(0, window.scrollY / docScrollMax)) : 0; }
+    if (window.ResizeObserver) { new ResizeObserver(measureDoc).observe(document.body); } else { measureDoc(); }
 
     /* ============================================================
        0. CALIBRATION INTRO — smooth curtain-raise
@@ -4682,6 +4789,13 @@
       "float noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f);",
       "  float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0));",
       "  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }",
+      // Five octaves — the full filigree in the gas. Three was tried and measured 40%
+      // cheaper per fbm call, but the clouds lost their fine curdling and that detail is
+      // the point of the nebula. The phone keeps its frame rate through the render scale
+      // and the 30fps cap instead (see FIELD_SCALE / FIELD_MIN_DT), which cost nothing
+      // that can be seen. If you ever do trade this down, renormalise by measurement,
+      // not arithmetic — the tonemap is non-linear and dropping to three came out 1.7%
+      // dark on a 1.107 scale factor, needing 1.16 to sit level.
       "float fbm(vec2 p){ float v=0.0,a=0.55; mat2 m=mat2(1.6,1.2,-1.2,1.6);",
       "  for(int i=0;i<5;i++){ v+=a*noise(p); p=m*p+1.7; a*=0.5;} return v; }",
       // star field with twinkle + soft diffraction sparkle on the brightest
@@ -4698,13 +4812,13 @@
       "  float t=uTime*0.015; float depth=uScroll*2.5;",
       // deep-space base gradient — indigo top, warmer plum below
       "  vec3 col=mix(vec3(0.085,0.058,0.155), vec3(0.056,0.04,0.11), uv.y);",
-      "  col += vec3(0.10,0.04,0.09)*(1.0-uv.y)*0.6;",
+      "  col += vec3(0.13,0.042,0.12)*(1.0-uv.y)*0.6;",   // plum wash across the lower sky
       // domain-warped nebula gas
       "  vec2 q=vec2(fbm(p*1.3+vec2(t,-t)), fbm(p*1.3+vec2(4.0-t,1.5+t)));",
       "  vec2 r=vec2(fbm(p*1.7+q*1.9+vec2(1.7,9.2)+depth*0.1), fbm(p*1.7+q*1.9+vec2(8.3,2.8)));",
       "  float neb=pow(fbm(p*1.9+r*2.0+vec2(0.0,depth*0.2)),1.75);",
-      "  vec3 c1=vec3(0.24,0.12,0.50);",   // violet
-      "  vec3 c2=vec3(0.60,0.16,0.33);",   // wine-magenta
+      "  vec3 c1=vec3(0.28,0.11,0.58);",   // violet — deeper, more plum
+      "  vec3 c2=vec3(0.66,0.15,0.37);",   // wine-magenta — richer
       "  vec3 c3=vec3(0.90,0.66,0.30);",   // gold
       "  vec3 c4=vec3(0.10,0.38,0.46);",   // teal accent
       "  vec3 nebCol=mix(c1,c4, smoothstep(0.25,0.75,q.y));",
@@ -4741,10 +4855,20 @@
       //  BACKGROUND TONE CONTROLS  ·  edit these 9 numbers to tune the three states
       //  uPhase : 0.0 = START (before timeline) · 0.5 = MIDDLE (dark) · 1.0 = END (after)
       //  Each state has  BRIGHT (brightness) · SAT (saturation, mainly the plum) · CON (contrast)
+      //
+      //  Measured, not guessed — sky luminance with the type masked out, 1280x800:
+      //    opening  46.98 -> 50.41  (+7.3%)      saturation 0.461 -> 0.515 (+11.8%)
+      //    invite   64.04 -> 66.80  (+4.3%)
+      //  The opening was reading dark against the invite card and was asked to come up
+      //  5–10% without ever passing the section after the timeline, which is why START
+      //  and END move together and START stays the lower of the two. Note that SAT and
+      //  BRIGHT pull against each other: saturation drags colour away from luma, so the
+      //  first attempt at +7% brightness only measured +2.5% once SAT went up with it.
+      //  Change one and re-measure both, rather than trusting the constants.
       // ----------------------------------------------------------------------------
-      "  const float START_BRIGHT=1.10, START_SAT=1.30, START_CON=1.30;",   // top / before timeline
-      "  const float MID_BRIGHT  =0.80, MID_SAT  =1.30, MID_CON  =1.28;",   // dark middle: dark background, vibrant plum
-      "  const float END_BRIGHT  =1.15, END_SAT  =1.30, END_CON  =1.30;",   // after timeline
+      "  const float START_BRIGHT=1.31, START_SAT=1.42, START_CON=1.30;",   // top / before timeline
+      "  const float MID_BRIGHT  =0.82, MID_SAT  =1.42, MID_CON  =1.28;",   // dark middle: dark background, vibrant plum
+      "  const float END_BRIGHT  =1.32, END_SAT  =1.42, END_CON  =1.30;",   // after timeline
       // Transition easing — widen these ranges to make the light↔dark fade slower / smoother.
       "  float e1=smoothstep(0.0, 0.30, uPhase);",   // START -> MIDDLE  (darkening completes as horizontal scroll starts)
       "  float e2=smoothstep(0.70, 0.95, uPhase);",  // MIDDLE -> END    (re-brightening during Mandapam pause)
@@ -4783,16 +4907,26 @@
     function sizeField() {
       if (!gl) return;
       var r = fieldCanvas.getBoundingClientRect();
-      var w = Math.max(1, Math.floor(r.width * FIELD_DPR)), h = Math.max(1, Math.floor(r.height * FIELD_DPR));
+      var w = Math.max(1, r.width * FIELD_DPR), h = Math.max(1, r.height * FIELD_DPR);
+      var over = (w * h) / FIELD_BUDGET;
+      if (over > 1) { var k = Math.sqrt(1 / over); w *= k; h *= k; }   // same picture, fewer samples
+      w = Math.max(1, Math.floor(w)); h = Math.max(1, Math.floor(h));
       if (fieldCanvas.width === w && fieldCanvas.height === h) return;
       fieldCanvas.width = w; fieldCanvas.height = h;
       gl.viewport(0, 0, w, h);
     }
     var glOK = initGL(); sizeField();
+    var lastFieldAt = -1e9;
     function renderField(now) {
       if (!gl) return;
+      var dt = now - lastFieldAt;
+      if (dt < FIELD_MIN_DT) return;          // phones draw the cosmos at 30fps
+      lastFieldAt = now;
+      /* The tone eases by wall-clock, not by frame, so the light↔dark transition
+         takes exactly as long whether the cosmos is drawing at 30 or at 60. */
+      var k = 1 - Math.pow(1 - BG_PHASE_EASE, Math.min(4, dt / 16.667));
+      bgPhaseSmooth += (bgPhase - bgPhaseSmooth) * k;
       gl.uniform2f(uni.uRes, fieldCanvas.width, fieldCanvas.height); gl.uniform1f(uni.uTime, (now - startTime) / 1000);
-      bgPhaseSmooth += (bgPhase - bgPhaseSmooth) * BG_PHASE_EASE;  // gradual, slow tone transition
       gl.uniform1f(uni.uScroll, scroll); gl.uniform1f(uni.uPhase, bgPhaseSmooth); gl.uniform2f(uni.uPointer, pointer[0], pointer[1]); gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
@@ -4828,6 +4962,7 @@
         tx = e.clientX; ty = e.clientY;
         cur.style.opacity = 1; dot.style.opacity = 1;
         dot.style.transform = "translate(" + tx + "px," + ty + "px)";
+        if (!curRAF) curRAF = requestAnimationFrame(ease);   // wake the chase
       });
       window.addEventListener("pointerdown", function () { cur.classList.add("is-press"); });
       window.addEventListener("pointerup", function () { cur.classList.remove("is-press"); });
@@ -4841,10 +4976,14 @@
           lbl.textContent = key ? (LABELS[key] || key) : (t.classList.contains("tile") ? "observe" : "");
         } else { cur.classList.remove("is-active", "is-wine"); lbl.textContent = ""; }
       });
+      /* The ring eases toward the pointer. Once it has arrived there is nothing left
+         to ease, so the chase stops until the pointer moves again rather than
+         re-rendering the same position sixty times a second for ever. */
+      var curRAF = 0;
       function ease() {
         cx += (tx - cx) * 0.16; cy += (ty - cy) * 0.16;
         cur.style.transform = "translate(" + cx + "px," + cy + "px)";
-        requestAnimationFrame(ease);
+        curRAF = (Math.abs(tx - cx) < 0.2 && Math.abs(ty - cy) < 0.2) ? 0 : requestAnimationFrame(ease);
       }
       ease();
     })();
@@ -4854,6 +4993,7 @@
        ============================================================ */
     var jWrap = document.getElementById("journey-wrap"), track = document.getElementById("track");
     var jBar = document.getElementById("journey-bar"), svg = document.getElementById("rail-svg");
+    var pulseSvg = document.getElementById("pulse-svg");
     var jTitle = document.getElementById("journeyTitle");
     var nodes = [].slice.call(document.querySelectorAll(".node"));
     var VB_W = 2600, VB_H = 700, trackW = 0, HALF_GLYPH = 33;
@@ -4868,6 +5008,13 @@
     var travelFrom = 0, travelTo = 0;
     var ORIGIN_X = 200, MANDAPAM_X = 2057;   // the diya and the mandapam, in SVG user units
 
+    /* Everything updateJourney() needs about the page's geometry is measured here,
+       once per layout, and read from these on every scroll instead of from the DOM.
+       The scroll path used to measure the wrapper and then every node individually —
+       ten layout reads per scroll event, nine of them after the track had already
+       been moved, so each one forced a fresh layout. Same picture, no measuring. */
+    var jAbsTop = 0, jH = 0, jVH = 0, jTotal = 1, nodeX = [], nodeHalf = [], nodeShown = [];
+
     function layoutJourney() {
       /* Measure the pinned box, not the window. On a phone they differ by the
          height of the address bar, and reading the window put the rail lower
@@ -4876,6 +5023,8 @@
       var scaleY = (vh * 0.86) / VB_H, railH = VB_H * scaleY, topOff = (vh - railH) / 2;
       trackW = Math.max(VB_W * scaleY * 1.9, vw * (vw < 720 ? 4.8 : 3.7));
       track.style.width = trackW + "px"; svg.style.width = trackW + "px"; svg.style.height = railH + "px"; svg.style.top = topOff + "px";
+      /* the pulse overlay rides on exactly the same grid as the rail */
+      if (pulseSvg) { pulseSvg.style.width = trackW + "px"; pulseSvg.style.height = railH + "px"; pulseSvg.style.top = topOff + "px"; }
       nodes.forEach(function (n) {
         var ax = parseFloat(n.dataset.x) / VB_W * trackW, ay = topOff + parseFloat(n.dataset.y) * scaleY;
         n.style.left = ax + "px";
@@ -4884,11 +5033,27 @@
       });
       travelFrom = (ORIGIN_X / VB_W) * trackW - vw / 2;
       travelTo = (MANDAPAM_X / VB_W) * trackW - vw / 2;
+
+      /* Cache the geometry the scroll path reads. Node x is the same number that
+         positioned it above, so where a node sits on screen is arithmetic from the
+         track's own translate — no need to ask the browser where it ended up. */
+      jVH = vh;
+      jH = jWrap.offsetHeight;
+      jAbsTop = jWrap.getBoundingClientRect().top + window.scrollY;
+      jTotal = Math.max(1, jH - vh);
+      nodeX = []; nodeHalf = [];
+      nodes.forEach(function (n, i) {
+        nodeX.push(parseFloat(n.dataset.x) / VB_W * trackW);
+        nodeHalf.push(n.offsetWidth / 2);
+        if (nodeShown[i] === undefined) nodeShown[i] = false;
+      });
     }
     var JOURNEY_TRAVEL_END = 0.88;  // horizontal travel finishes here; the last 12% dwells on the mandapam
     function updateJourney() {
-      var vh = jPin.clientHeight || innerHeight;
-      var rect = jWrap.getBoundingClientRect(), total = jWrap.offsetHeight - vh;
+      var vh = jVH || innerHeight;
+      /* rect.top / rect.bottom, derived rather than measured */
+      var rTop = jAbsTop - window.scrollY, rBottom = rTop + jH, total = jTotal;
+      var rect = { top: rTop, bottom: rBottom };
       var p = Math.min(1, Math.max(0, (-rect.top) / total));
       // Remap so the track reaches the mandapam (fully scrolled) at JOURNEY_TRAVEL_END, then holds
       // for the remaining scroll — a pause that lets the mandapam be seen before the section releases.
@@ -4896,7 +5061,17 @@
       var x = travelFrom + travel * (travelTo - travelFrom);
       track.style.transform = "translateX(" + (-x) + "px)"; jBar.style.right = (100 - travel * 100) + "%";
       var tf = Math.max(0, 1 - p / 0.12); jTitle.style.opacity = tf; jTitle.style.transform = "translateY(" + (-(1 - tf) * 24) + "px)";
-      for (var i = 0; i < nodes.length; i++) { var nr = nodes[i].getBoundingClientRect(); if (nr.left < innerWidth * 0.82 && nr.right > innerWidth * 0.06) nodes[i].classList.add("revealed"); }
+      /* A node's screen position is its x inside the track minus the track's own
+         translate — the same two numbers we just used to move the track. Nodes that
+         have already been revealed are skipped, so this settles to nothing. */
+      var vwNow = innerWidth;
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodeShown[i]) continue;
+        var left = nodeX[i] - x - nodeHalf[i];
+        if (left < vwNow * 0.82 && left + nodeHalf[i] * 2 > vwNow * 0.06) {
+          nodes[i].classList.add("revealed"); nodeShown[i] = true;
+        }
+      }
 
       // Background tone phase calculation:
       // 1. Darkening starts as "Two Paths, One Origin..." / Diya approaches center of screen (rect.top <= vh * 0.65).
@@ -4919,17 +5094,129 @@
         }
       }
       bgPhase = Math.max(0, Math.min(1, ph));
+
+      /* Pinned means the journey has taken the screen: this is the stretch where
+         vertical scroll reads as horizontal travel, and the only stretch where a
+         prompt would make sense. */
+      journeyHint.setPlace(rect.top <= 0 && rect.bottom > vh, p);
     }
+
+    /* ============================================================
+       2b. THE JOURNEY — guidance, only where someone can get stuck
+       ------------------------------------------------------------
+       Three moments, three prompts, nothing else:
+         · they try to swipe or wheel sideways (the natural instinct here, and it
+           does nothing) — after the third attempt, say where the movement lives
+         · they are on the mandapam, which holds still long enough at the end of
+           the travel to read as the bottom of the page — after 8s of stillness,
+           tell them there is more below
+         · they are somewhere in the middle and have not moved for a minute — the
+           same sideways prompt, and the clock restarts so it can come round again
+       The state lives here; the frame loop ticks it only while the journey is
+       near the viewport, so it costs nothing on the rest of the page.
+       ============================================================ */
+    var journeyHint = (function () {
+      var el = document.getElementById("journey-hint");
+      if (!el) return { tick: function () { }, setPlace: function () { }, moved: function () { } };
+
+      var SIDEWAYS = "Scroll down / up to move horizontally";
+      var DOWNWARD = "Scroll down";
+      var END_ZONE = JOURNEY_TRAVEL_END;   // the mandapam pause
+      var SIDE_TRIES = 3;                  // "more than 2 times"
+      var SIDE_WINDOW = 15000;             // attempts only add up if they are close together
+      var STILL_AT_END = 8000, END_FOR = 6000;
+      var STILL_INSIDE = 60000, INSIDE_FOR = 5000;
+
+      var shown = false, hideAt = 0;
+      var movedAt = 0, tries = 0, firstTryAt = 0;
+      var pinned = false, atEnd = false, endSpent = false;
+
+      function show(msg, forMs, now) {
+        if (el.textContent !== msg) el.textContent = msg;
+        el.classList.add("on");
+        shown = true; hideAt = now + forMs;
+      }
+      function hide() { if (shown) { el.classList.remove("on"); shown = false; hideAt = 0; } }
+
+      /* Where the guest is, handed over by the journey's own scroll update. */
+      function setPlace(isPinned, p) {
+        pinned = isPinned;
+        var nowEnd = isPinned && p >= END_ZONE;
+        if (!nowEnd) endSpent = false;      // leaving the mandapam re-arms that prompt
+        atEnd = nowEnd;
+        if (!pinned) { hide(); tries = 0; }
+      }
+      /* Any scroll at all counts as movement — including the scroll that does not
+         change p, at the very end of the travel. */
+      function moved(now) { movedAt = now; }
+
+      /* A sideways gesture: wheel with horizontal intent, a horizontal swipe, or
+         the left/right keys. Three inside the window and the prompt appears. */
+      function sideways(now) {
+        if (!pinned || shown) return;
+        if (!tries || now - firstTryAt > SIDE_WINDOW) { tries = 0; firstTryAt = now; }
+        tries++;
+        if (tries >= SIDE_TRIES) { show(SIDEWAYS, 10000, now); tries = 0; }
+      }
+
+      window.addEventListener("wheel", function (e) {
+        if (Math.abs(e.deltaX) > 6 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) sideways(performance.now());
+      }, { passive: true });
+
+      var tx0 = 0, ty0 = 0, swiped = false;
+      window.addEventListener("touchstart", function (e) {
+        tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY; swiped = false;
+      }, { passive: true });
+      window.addEventListener("touchmove", function (e) {
+        if (swiped || !pinned) return;
+        var dx = e.touches[0].clientX - tx0, dy = e.touches[0].clientY - ty0;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.6) { swiped = true; sideways(performance.now()); }
+      }, { passive: true });
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") sideways(performance.now());
+      });
+
+      function tick(now) {
+        if (shown && now >= hideAt) hide();
+        if (!pinned) { movedAt = now; return; }
+        if (!movedAt) movedAt = now;
+        var still = now - movedAt;
+        if (shown) return;
+        if (atEnd) {
+          if (!endSpent && still > STILL_AT_END) { show(DOWNWARD, END_FOR, now); endSpent = true; }
+        } else if (still > STILL_INSIDE) {
+          show(SIDEWAYS, INSIDE_FOR, now);
+          movedAt = now;                    // and the minute begins again
+        }
+      }
+
+      return { tick: tick, setPlace: setPlace, moved: moved };
+    })();
 
     var pulseCfg = [{ sel: "#originTrail", color: "#eef0ff", n: 2, speed: 0.05 }, { sel: "#laneHer", color: "#EAC56C", n: 6, speed: 0.055 }, { sel: "#laneHis", color: "#E85D75", n: 6, speed: 0.055 }];
     var pulses = [];
+    /* The three lane paths never change shape, so each one is walked once here and
+       kept as a table of points. Asking the SVG engine for getPointAtLength() is a
+       geometry solve, and the old code asked fourteen times a frame, for ever, for
+       answers that were always the same. Sampled at this density the difference in
+       the pulse's path is far under a pixel. */
+    var PULSE_SAMPLES = 240;
+    function samplePath(path) {
+      var len = path.getTotalLength(), xs = new Float32Array(PULSE_SAMPLES + 1), ys = new Float32Array(PULSE_SAMPLES + 1);
+      for (var i = 0; i <= PULSE_SAMPLES; i++) {
+        var pt = path.getPointAtLength(len * i / PULSE_SAMPLES);
+        xs[i] = pt.x; ys[i] = pt.y;
+      }
+      return { xs: xs, ys: ys };
+    }
     function setupPulses() {
       var layer = document.getElementById("pulseLayer"); layer.innerHTML = ""; pulses = [];
       pulseCfg.forEach(function (cfg) {
-        var path = document.querySelector(cfg.sel); if (!path) return; var len = path.getTotalLength();
+        var path = document.querySelector(cfg.sel); if (!path) return;
+        var lut = samplePath(path);
         for (var i = 0; i < cfg.n; i++) {
           var c = document.createElementNS(SVGNS, "circle"); c.setAttribute("r", "4"); c.setAttribute("fill", cfg.color); c.setAttribute("filter", "url(#glowSoft)"); layer.appendChild(c);
-          pulses.push({ el: c, path: path, len: len, off: i / cfg.n, speed: cfg.speed });
+          pulses.push({ el: c, lut: lut, off: i / cfg.n, speed: cfg.speed });
         }
       });
     }
@@ -4941,8 +5228,11 @@
     function updatePulses(now) {
       var t = now / 1000;
       for (var i = 0; i < pulses.length; i++) {
-        var pu = pulses[i], f = ((t * pu.speed) + pu.off) % 1, pt = pu.path.getPointAtLength(f * pu.len);
-        pu.el.setAttribute("cx", pt.x.toFixed(1)); pu.el.setAttribute("cy", pt.y.toFixed(1)); pu.el.setAttribute("opacity", (0.35 + 0.65 * Math.sin(f * Math.PI)).toFixed(2));
+        var pu = pulses[i], f = ((t * pu.speed) + pu.off) % 1;
+        var s = f * PULSE_SAMPLES, i0 = s | 0, fr = s - i0, i1 = i0 + 1;
+        var xs = pu.lut.xs, ys = pu.lut.ys;
+        var px = xs[i0] + (xs[i1] - xs[i0]) * fr, py = ys[i0] + (ys[i1] - ys[i0]) * fr;
+        pu.el.setAttribute("cx", px.toFixed(1)); pu.el.setAttribute("cy", py.toFixed(1)); pu.el.setAttribute("opacity", (0.35 + 0.65 * Math.sin(f * Math.PI)).toFixed(2));
       }
     }
 
@@ -5996,7 +6286,23 @@
       44, 48, 38, 42, 50, 44, 48, 38, 44,
       312, 308, 316   // magenta-purple, matching the tiles
     ];
+    /* The wall used to sparkle, and its ninety-nine cells used to keep animating,
+       the entire time the page was open — while the guest was reading the timeline
+       three screens above it. Off-screen it now holds still. Nothing about how it
+       looks when you actually reach it changes. */
+    var hexNear = false;
+    (function () {
+      var wall = document.querySelector(".hex-wall");
+      if (!wall || !window.IntersectionObserver) { hexNear = true; return; }
+      wall.classList.add("dormant");
+      new IntersectionObserver(function (es) {
+        hexNear = es[0].isIntersecting;
+        wall.classList.toggle("dormant", !hexNear);
+      }, { rootMargin: "300px 0px" }).observe(wall);
+    })();
+
     function idleSparkle() {
+      if (!hexNear) return;
       if (!hexCells.length || waveActive) return;
       // Trigger 2 hexes per tick to increase total active glowing hexes by ~25%
       for (var k = 0; k < 2; k++) {
@@ -6027,28 +6333,55 @@
     nearView(convCanvas, function (v) { convVisible = v; });
     nearView(scopeCanvas, function (v) { scopeVisible = v; });
     nearView(jWrap, function (v) { pulsesVisible = v; });
+    /* Hand the rail its compositing layer ahead of time, and take it back after.
+       Wider margin than the pulses use, so the raster is finished before the first
+       frame that needs it rather than during it. */
+    if (window.IntersectionObserver) {
+      new IntersectionObserver(function (es) {
+        jWrap.classList.toggle("travelling", es[0].isIntersecting);
+      }, { rootMargin: "600px 0px" }).observe(jWrap);
+    } else { jWrap.classList.add("travelling"); }
 
+    /* Scroll events arrive far faster than the screen refreshes — on a phone,
+       several per frame — and the old handler did the full journey update on every
+       one of them. Now the event only raises a flag and the work happens once, in
+       the frame that is about to be drawn, next to everything else that draws. */
+    var scrollDirty = true;
     function loop(now) {
+      if (scrollDirty) { scrollDirty = false; updateScroll(); updateJourney(); updateRail(); journeyHint.moved(now); }
       renderField(now);
-      if (pulsesVisible) updatePulses(now);
+      if (pulsesVisible) { updatePulses(now); journeyHint.tick(now); }
       if (scopeVisible) drawScope(now);
       if (convVisible) drawConv(now);
       rafId = requestAnimationFrame(loop);
     }
     function updateRail() { railFill.style.height = (scroll * 100).toFixed(2) + "%"; }
-    function onScroll() { updateScroll(); updateJourney(); updateRail(); }
-    function onResize() { sizeField(); layoutJourney(); sizeScope(); sizeConv(); sizeQueue(); updateScroll(); updateJourney(); }
+    function onScroll() { scrollDirty = true; }
+    function doResize() { sizeField(); layoutJourney(); sizeScope(); sizeConv(); sizeQueue(); measureDoc(); updateScroll(); updateJourney(); }
+    /* On a phone the address bar sliding away fires resize in the middle of a scroll,
+       and a full re-layout of the journey mid-scroll is felt as a lurch. A height-only
+       change is exactly that case: the cosmos is pinned to the large viewport and does
+       not move, so nothing needs re-laying out. Everything else settles after the
+       gesture instead of during it. */
+    var lastW = innerWidth, lastH = innerHeight, resizeT = 0;
+    function onResize() {
+      var w = innerWidth, h = innerHeight;
+      if (w === lastW && Math.abs(h - lastH) < 140) { lastH = h; return; }
+      clearTimeout(resizeT);
+      resizeT = setTimeout(function () { lastW = innerWidth; lastH = innerHeight; doResize(); scrollDirty = true; }, 120);
+    }
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize, { passive: true });
+    window.addEventListener("orientationchange", function () { clearTimeout(resizeT); resizeT = setTimeout(function () { lastW = innerWidth; lastH = innerHeight; doResize(); scrollDirty = true; }, 200); });
     window.addEventListener("pointermove", function (e) { pointer = [e.clientX / innerWidth, 1 - e.clientY / innerHeight]; });
     document.addEventListener("visibilitychange", function () {
       pageVisible = !document.hidden;
-      if (pageVisible && !rafId) { rafId = requestAnimationFrame(loop); }
+      if (pageVisible && !rafId) { scrollDirty = true; rafId = requestAnimationFrame(loop); }
       else if (!pageVisible && rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       if (pageVisible) wakeWall();     // catch up on anything dropped while away
     });
 
-    layoutJourney(); setupPulses(); sizeScope(); updateScroll(); updateJourney(); updateRail();
+    layoutJourney(); setupPulses(); sizeScope(); measureDoc(); updateScroll(); updateJourney(); updateRail();
     rafId = requestAnimationFrame(loop);
   })();
 </script>

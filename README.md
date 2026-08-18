@@ -17,6 +17,27 @@ python -m http.server 4321
 then open <http://localhost:4321>. Any current browser with WebGL works; without WebGL
 the background falls back to a static gradient.
 
+### Troubleshooting / Port Conflicts
+
+If you see `PermissionError: [WinError 10013]` or `Address already in use`, port `4321` is currently occupied by another process.
+
+**To free/close port 4321 on Windows:**
+
+1. Find the Process ID (PID) using port 4321:
+   ```cmd
+   netstat -ano | findstr :4321
+   ```
+2. Kill the process:
+   - **PowerShell:** `Stop-Process -Id <PID> -Force`
+   - **CMD:** `taskkill /PID <PID> /F`
+
+*(On macOS / Linux: `lsof -i :4321` then `kill -9 <PID>`)*
+
+Alternatively, run the server on a different port:
+```bash
+python -m http.server 8080
+```
+
 ## Structure
 
 | Path | Purpose |
