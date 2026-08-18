@@ -809,9 +809,32 @@
     width: 66px;
     height: 66px;
     position: relative;
+    z-index: 0;
     display: grid;
     place-items: center;
     flex: 0 0 auto;
+  }
+
+  /* The glow behind each milestone icon. This used to be filter:drop-shadow on the
+     icon's own SVG, which reads identically — but iOS renders that filter on the CPU
+     and re-renders it EVERY frame while anything inside the icon animates. Several of
+     these icons animate forever (the diya flame, the EKG pulse, the electron orbit),
+     which put a permanent per-frame blur bill on the whole timeline and was most of
+     why iPhones crawled through this section while Android sailed. A radial gradient
+     is painted once and composited for free. The per-icon colour and size are set by
+     the script right after the nodes are laid out. */
+  .glyph::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--halo-d, 0px);
+    height: var(--halo-d, 0px);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--halo-c, transparent) 0%, transparent 62%);
+    pointer-events: none;
+    z-index: -1;
   }
 
   .node:not(.up) .glyph {
@@ -960,7 +983,7 @@
     height: 72px;
     display: block;
     overflow: visible;
-    filter: drop-shadow(0 0 22px rgba(234, 197, 108, .55));
+    /* glow supplied by .glyph::before — see the note there for why not drop-shadow */
   }
 
   .diya .diya-flame {
@@ -1022,12 +1045,10 @@
 
   .glyph-icon.gold {
     color: var(--gold);
-    filter: drop-shadow(0 0 14px rgba(234, 197, 108, .55));
   }
 
   .glyph-icon.wine {
     color: var(--wine);
-    filter: drop-shadow(0 0 16px rgba(232, 93, 117, .8));
   }
 
   .glyph-icon .stroke {
@@ -1465,13 +1486,15 @@
     margin-top: clamp(26px, 5vw, 44px);
   }
 
+  /* One action on the card, so it is sized to be the thing the eye lands on
+     and the thumb finds without aiming. */
   .btn {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: clamp(12px, 1.7vw, 14px);
     letter-spacing: .18em;
     text-transform: uppercase;
-    padding: 15px 26px;
-    border-radius: 12px;
+    padding: clamp(18px, 2.6vw, 22px) clamp(38px, 7vw, 54px);
+    border-radius: 14px;
     border: 1px solid var(--line);
     color: var(--ink);
     background: rgba(255, 255, 255, .03);
@@ -2659,6 +2682,18 @@
                 <stop offset="0" stop-color="#EAC56C" />
                 <stop offset="1" stop-color="#97465B" />
               </linearGradient>
+              <!-- Soft glowing dots, gradient-built — replaces the blur filter the slit
+                   endpoints used to carry (see the no-blur note above the strokes) -->
+              <radialGradient id="dotGold">
+                <stop offset="0" stop-color="#EAC56C" />
+                <stop offset=".3" stop-color="#EAC56C" stop-opacity=".55" />
+                <stop offset="1" stop-color="#EAC56C" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="dotWine">
+                <stop offset="0" stop-color="#E85D75" />
+                <stop offset=".3" stop-color="#E85D75" stop-opacity=".55" />
+                <stop offset="1" stop-color="#E85D75" stop-opacity="0" />
+              </radialGradient>
               <!-- Feathered hole for the lane notches: solid-hidden core, soft fade to visible -->
               <radialGradient id="notchGrad">
                 <stop offset="0" stop-color="#000" />
@@ -2682,35 +2717,58 @@
               </mask>
             </defs>
 
-            <g stroke="#EAC56C" fill="none" opacity=".14" filter="url(#glowSoft)">
+            <!-- ══ NO feGaussianBlur ANYWHERE IN THIS SVG. iOS runs SVG blur filters on
+                 the CPU, and this SVG is a huge layer rasterised in tiles as the track
+                 slides — every tile was paying for Gaussian blurs at each checkpoint,
+                 which is what made iPhones stutter through the timeline while Android
+                 (GPU filters) never felt it. Each glow below is now built from layered
+                 strokes: a wide faint pass under a narrower brighter pass reads the same
+                 as a blur at a fraction of the cost, on every engine. ══ -->
+
+            <g stroke="#EAC56C" fill="none" opacity=".14">
               <path d="M840,182 C889,120 930,120 971,152" />
               <path d="M1315,184 C1364,244 1397,244 1438,214" />
             </g>
-            <g stroke="#E85D75" fill="none" opacity=".35" filter="url(#glowSoft)">
+            <g stroke="#E85D75" fill="none" opacity=".35">
               <path d="M840,528 C889,588 930,588 971,556" />
               <path d="M1315,524 C1364,464 1397,464 1438,494" />
             </g>
 
             <!-- single white beam entering the slit -->
+            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="26"
+              opacity=".08" />
+            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="12"
+              opacity=".26" />
             <path id="originTrail" d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="5"
-              filter="url(#glowBig)" opacity=".9" />
+              opacity=".95" />
 
             <!-- HER ray — GOLD -->
+            <path
+              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
+              stroke="#EAC56C" stroke-width="30" opacity=".05" mask="url(#laneNotch)" />
             <path id="laneHerGlow"
               d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
-              stroke="#EAC56C" stroke-width="12" opacity=".1" filter="url(#glowBig)" mask="url(#laneNotch)" />
+              stroke="#EAC56C" stroke-width="16" opacity=".10" mask="url(#laneNotch)" />
+            <path
+              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
+              stroke="#EAC56C" stroke-width="8" opacity=".22" mask="url(#laneNotch)" />
             <path id="laneHer"
               d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
-              stroke="#EAC56C" stroke-width="3.5" filter="url(#glowSoft)" mask="url(#laneNotch)" />
+              stroke="#EAC56C" stroke-width="3.5" mask="url(#laneNotch)" />
 
             <!-- HIS ray — WINE RED -->
+            <path
+              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
+              stroke="#E85D75" stroke-width="32" opacity=".08" mask="url(#laneNotch)" />
             <path id="laneHisGlow"
               d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
-              stroke="#E85D75" stroke-width="14" opacity=".25" filter="url(#glowBig)" mask="url(#laneNotch)" />
+              stroke="#E85D75" stroke-width="18" opacity=".16" mask="url(#laneNotch)" />
+            <path
+              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
+              stroke="#E85D75" stroke-width="10" opacity=".24" stroke-dasharray="8 12" mask="url(#laneNotch)" />
             <path id="laneHis"
               d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
-              stroke="#E85D75" stroke-width="4.2" stroke-dasharray="8 12" filter="url(#glowSoft)"
-              mask="url(#laneNotch)" />
+              stroke="#E85D75" stroke-width="4.2" stroke-dasharray="8 12" mask="url(#laneNotch)" />
 
             <!-- double slit plate -->
             <g stroke="#8f89a3" stroke-width="1">
@@ -2718,8 +2776,10 @@
               <rect x="385" y="325" width="2" height="55" rx="2" fill="#cbc4d8" />
               <rect x="385" y="396" width="2" height="75" rx="2.5" fill="#cbc4d8" />
             </g>
-            <circle cx="387" cy="317" r="3.5" fill="#EAC56C" filter="url(#glowBig)" />
-            <circle cx="387" cy="388" r="3.5" fill="#E85D75" filter="url(#glowBig)" />
+            <circle cx="387" cy="317" r="16" fill="url(#dotGold)" opacity=".85" />
+            <circle cx="387" cy="317" r="3.5" fill="#EAC56C" />
+            <circle cx="387" cy="388" r="16" fill="url(#dotWine)" opacity=".85" />
+            <circle cx="387" cy="388" r="3.5" fill="#E85D75" />
 
             <!-- ─── Mandapam Stage: pillars encoding the double-slit interference pattern ─── -->
             <defs>
@@ -2742,7 +2802,11 @@
                 <stop offset="1" stop-color="#EAC56C" stop-opacity="0" />
               </radialGradient>
             </defs>
-            <g id="mandapam" filter="url(#glowSoft)" transform="translate(2057 416) scale(0.96)">
+            <!-- No group filter here: the whole mandapam used to sit inside glowSoft, and
+                 the flame's infinite SMIL animation forced iOS to re-blur the entire group
+                 every frame on arrival — the visible re-rendering at the end of the travel.
+                 The stageBloom halo carries the glow instead. -->
+            <g id="mandapam" transform="translate(2057 416) scale(0.96)">
               <!-- convergence bloom halo behind the stage (top of stage aligns with the beam convergence line at absolute y=350) -->
               <circle cx="0" cy="-30" r="140" fill="url(#stageBloom)" />
               <!-- Roof canopy: temple pediment (compact) -->
@@ -2810,6 +2874,25 @@
                the frames they repaint do not drag the whole filtered rail through a
                re-raster with them. Visually it is the same layer it always was. -->
           <svg id="pulse-svg" viewBox="0 0 2600 700" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <!-- gradient glows for the travelling pulses — own copy of the defs, because
+                   Safari does not reliably resolve url(#…) across sibling SVGs -->
+              <radialGradient id="pgW">
+                <stop offset="0" stop-color="#eef0ff" />
+                <stop offset=".35" stop-color="#eef0ff" stop-opacity=".5" />
+                <stop offset="1" stop-color="#eef0ff" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="pgG">
+                <stop offset="0" stop-color="#EAC56C" />
+                <stop offset=".35" stop-color="#EAC56C" stop-opacity=".5" />
+                <stop offset="1" stop-color="#EAC56C" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="pgR">
+                <stop offset="0" stop-color="#E85D75" />
+                <stop offset=".35" stop-color="#E85D75" stop-opacity=".5" />
+                <stop offset="1" stop-color="#E85D75" stop-opacity="0" />
+              </radialGradient>
+            </defs>
             <g id="pulseLayer"></g>
           </svg>
 
@@ -3089,8 +3172,7 @@
 
           <div class="node up" data-x="2057" data-y="350">
             <div class="glyph">
-              <svg class="glyph-icon" viewBox="0 0 56 56" aria-hidden="true"
-                style="color:#FFE7C4;filter:drop-shadow(0 0 18px rgba(255,231,196,.7));">
+              <svg class="glyph-icon" viewBox="0 0 56 56" aria-hidden="true" style="color:#FFE7C4;">
                 <!-- Central kalash flame + pediment mark — the mandapam signature -->
                 <path class="fill" d="M28 14 C22 26 22 34 28 40 C34 34 34 26 28 14 Z" />
                 <path class="fill" d="M28 22 C25 30 25 36 28 39 C31 36 31 30 28 22 Z" opacity=".55" />
@@ -3182,9 +3264,8 @@
         </div>
 
         <div class="invite-actions">
-          <a class="btn btn-primary" id="saveDate" href="#" data-cursor="save">Save the date</a>
-          <a class="btn btn-ghost" id="directions" href="#" target="_blank" rel="noopener"
-            data-cursor="map">Directions</a>
+          <a class="btn btn-primary" id="directions" href="#" target="_blank" rel="noopener"
+            data-cursor="map">Location</a>
         </div>
 
       </div>
@@ -4957,7 +5038,7 @@
       var cur = document.getElementById("cursor"), dot = document.getElementById("cursor-dot"),
         lbl = document.getElementById("cursor-label");
       var cx = innerWidth / 2, cy = innerHeight / 2, tx = cx, ty = cy;
-      var LABELS = { save: "save", map: "map", drop: "drop", spin: "spin", observe: "observe" };
+      var LABELS = { map: "map", drop: "drop", spin: "spin", observe: "observe" };
       window.addEventListener("pointermove", function (e) {
         tx = e.clientX; ty = e.clientY;
         cur.style.opacity = 1; dot.style.opacity = 1;
@@ -4996,6 +5077,19 @@
     var pulseSvg = document.getElementById("pulse-svg");
     var jTitle = document.getElementById("journeyTitle");
     var nodes = [].slice.call(document.querySelectorAll(".node"));
+    /* Hand every glyph its halo — colour and reach matched to the CSS drop-shadows
+       these replace (gold 14px, wine 16px, kalash 18px, diya 22px). */
+    nodes.forEach(function (n) {
+      var g = n.querySelector(".glyph"), svg = g && g.querySelector("svg");
+      if (!svg) return;
+      var c, d;
+      if (svg.classList.contains("diya")) { c = "rgba(234,197,108,.50)"; d = 160; }
+      else if (svg.classList.contains("wine")) { c = "rgba(232,93,117,.62)"; d = 122; }
+      else if (svg.classList.contains("gold")) { c = "rgba(234,197,108,.50)"; d = 112; }
+      else { c = "rgba(255,231,196,.60)"; d = 130; }
+      g.style.setProperty("--halo-c", c);
+      g.style.setProperty("--halo-d", d + "px");
+    });
     var VB_W = 2600, VB_H = 700, trackW = 0, HALF_GLYPH = 33;
     var jPin = document.getElementById("journey-pin");
     /* The two ends of the horizontal travel, in track pixels. The journey opens
@@ -5104,7 +5198,11 @@
     /* ============================================================
        2b. THE JOURNEY — guidance, only where someone can get stuck
        ------------------------------------------------------------
-       Three moments, three prompts, nothing else:
+       Four moments, four prompts, nothing else:
+         · they arrive at either end of the journey — the diya at KCG, or the
+           mandapam — where nothing appears to move: say at once which way it
+           does, for a couple of seconds, and drop it early the moment they
+           travel, because by then they already know
          · they try to swipe or wheel sideways (the natural instinct here, and it
            does nothing) — after the third attempt, say where the movement lives
          · they are on the mandapam, which holds still long enough at the end of
@@ -5121,7 +5219,12 @@
 
       var SIDEWAYS = "Scroll down / up to move horizontally";
       var DOWNWARD = "Scroll down";
+      var ARRIVE = "Scroll down / up to navigate";
       var END_ZONE = JOURNEY_TRAVEL_END;   // the mandapam pause
+      var START_ZONE = 0.03;               // the diya, just as the journey takes the screen
+      var ARRIVE_FOR = 2600;               // two to three seconds, then it lets go
+      var ARRIVE_MIN = 600;                // long enough to be read before movement can dismiss it
+      var ARRIVE_MOVE = 0.012;             // travel that says they have understood and gone on
       var SIDE_TRIES = 3;                  // "more than 2 times"
       var SIDE_WINDOW = 15000;             // attempts only add up if they are close together
       var STILL_AT_END = 8000, END_FOR = 6000;
@@ -5130,21 +5233,38 @@
       var shown = false, hideAt = 0;
       var movedAt = 0, tries = 0, firstTryAt = 0;
       var pinned = false, atEnd = false, endSpent = false;
+      /* The arrival prompt: raised once at each end of the journey, and carrying
+         the scroll position it was raised at, so travel can take it back down. */
+      var startShown = false, endShown = false, arriveP = -1, arriveAt = 0;
 
       function show(msg, forMs, now) {
         if (el.textContent !== msg) el.textContent = msg;
         el.classList.add("on");
         shown = true; hideAt = now + forMs;
       }
-      function hide() { if (shown) { el.classList.remove("on"); shown = false; hideAt = 0; } }
+      function hide() { if (shown) { el.classList.remove("on"); shown = false; hideAt = 0; } arriveP = -1; }
 
       /* Where the guest is, handed over by the journey's own scroll update. */
       function setPlace(isPinned, p) {
         pinned = isPinned;
         var nowEnd = isPinned && p >= END_ZONE;
-        if (!nowEnd) endSpent = false;      // leaving the mandapam re-arms that prompt
+        var nowStart = isPinned && p <= START_ZONE;
+        if (!nowEnd) { endSpent = false; endShown = false; }   // leaving the mandapam re-arms those prompts
+        if (!nowStart) startShown = false;                     // and the same for the diya
         atEnd = nowEnd;
-        if (!pinned) { hide(); tries = 0; }
+        if (!pinned) { hide(); tries = 0; return; }
+
+        /* KCG at one end, the mandapam at the other: both are moments where the
+           journey looks like it has stopped. Say which way it moves, straight
+           away — and take the words back the moment they start moving, because
+           by then they are the answer to a question nobody is asking any more. */
+        var now = performance.now();
+        if (arriveP >= 0) {
+          if (now - arriveAt > ARRIVE_MIN && Math.abs(p - arriveP) > ARRIVE_MOVE) hide();
+        } else if (!shown) {
+          if (nowStart && !startShown) { startShown = true; show(ARRIVE, ARRIVE_FOR, now); arriveP = p; arriveAt = now; }
+          else if (nowEnd && !endShown) { endShown = true; show(ARRIVE, ARRIVE_FOR, now); arriveP = p; arriveAt = now; }
+        }
       }
       /* Any scroll at all counts as movement — including the scroll that does not
          change p, at the very end of the travel. */
@@ -5209,14 +5329,22 @@
       }
       return { xs: xs, ys: ys };
     }
+    /* Each pulse is a gradient halo around a solid core — the blur filter it used to
+       wear was re-run by iOS on the CPU for all fourteen dots on every frame. */
+    var PULSE_GRAD = { "#eef0ff": "pgW", "#EAC56C": "pgG", "#E85D75": "pgR" };
     function setupPulses() {
       var layer = document.getElementById("pulseLayer"); layer.innerHTML = ""; pulses = [];
       pulseCfg.forEach(function (cfg) {
         var path = document.querySelector(cfg.sel); if (!path) return;
         var lut = samplePath(path);
         for (var i = 0; i < cfg.n; i++) {
-          var c = document.createElementNS(SVGNS, "circle"); c.setAttribute("r", "4"); c.setAttribute("fill", cfg.color); c.setAttribute("filter", "url(#glowSoft)"); layer.appendChild(c);
-          pulses.push({ el: c, lut: lut, off: i / cfg.n, speed: cfg.speed });
+          var g = document.createElementNS(SVGNS, "g");
+          var halo = document.createElementNS(SVGNS, "circle");
+          halo.setAttribute("r", "10"); halo.setAttribute("fill", "url(#" + (PULSE_GRAD[cfg.color] || "pgG") + ")");
+          var core = document.createElementNS(SVGNS, "circle");
+          core.setAttribute("r", "3.4"); core.setAttribute("fill", cfg.color);
+          g.appendChild(halo); g.appendChild(core); layer.appendChild(g);
+          pulses.push({ el: g, lut: lut, off: i / cfg.n, speed: cfg.speed });
         }
       });
     }
@@ -5232,7 +5360,8 @@
         var s = f * PULSE_SAMPLES, i0 = s | 0, fr = s - i0, i1 = i0 + 1;
         var xs = pu.lut.xs, ys = pu.lut.ys;
         var px = xs[i0] + (xs[i1] - xs[i0]) * fr, py = ys[i0] + (ys[i1] - ys[i0]) * fr;
-        pu.el.setAttribute("cx", px.toFixed(1)); pu.el.setAttribute("cy", py.toFixed(1)); pu.el.setAttribute("opacity", (0.35 + 0.65 * Math.sin(f * Math.PI)).toFixed(2));
+        pu.el.setAttribute("transform", "translate(" + px.toFixed(1) + " " + py.toFixed(1) + ")");
+        pu.el.setAttribute("opacity", (0.35 + 0.65 * Math.sin(f * Math.PI)).toFixed(2));
       }
     }
 
@@ -5409,35 +5538,10 @@
       card.addEventListener("pointerleave", function () { card.style.transform = ""; });
     })();
 
-    /* Save-the-date (.ics via data-URI) + Directions */
+    /* The venue, one tap away */
     (function () {
       var MAPS_URL = "https://maps.app.goo.gl/MJh3EFkfqU8jYnXEA";
-      var VENUE = "Shree Venkatesh Mahal, Pallavaram, Chennai";
       document.getElementById("directions").setAttribute("href", MAPS_URL);
-      function pad(x) { return (x < 10 ? "0" : "") + x; }
-      function fmt(d) { return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + "00Z"; }
-      /* Commas, semicolons and backslashes carry meaning in an .ics line and
-         have to be escaped, or the venue's comma would split the field. */
-      function esc(s) { return String(s).replace(/([\\,;])/g, "\\$1").replace(/\n/g, "\\n"); }
-      function vevent(start, end, summary, desc, n) {
-        return ["BEGIN:VEVENT", "UID:" + Date.now() + "-" + n + "@phaselock",
-          "DTSTAMP:" + fmt(new Date()), "DTSTART:" + fmt(start), "DTEND:" + fmt(end),
-          "SUMMARY:" + esc(summary), "LOCATION:" + esc(VENUE),
-          "DESCRIPTION:" + esc(desc), "URL:" + MAPS_URL, "END:VEVENT"];
-      }
-      document.getElementById("saveDate").addEventListener("click", function (e) {
-        e.preventDefault();
-        /* Two events, one file — most calendars import both in a single tap. */
-        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PhaseLock//EN", "CALSCALE:GREGORIAN"]
-          .concat(vevent(RECEPTION_DATE, new Date(RECEPTION_DATE.getTime() + 4 * 3600000),
-            "Thirumalai & Pooja — Reception", "Reception, 6:00 PM onwards. Two paths, one bright point.", 1))
-          .concat(vevent(WEDDING_DATE, new Date(WEDDING_DATE.getTime() + 5400000),
-            "Thirumalai & Pooja — Wedding", "Muhurtham, 6:00 – 7:30 AM. Two paths, one bright point.", 2))
-          .concat(["END:VCALENDAR"]).join("\r\n");
-        var a = document.createElement("a");
-        a.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
-        a.download = "thirumalai-pooja.ics"; document.body.appendChild(a); a.click(); a.remove();
-      });
     })();
 
     /* ============================================================
