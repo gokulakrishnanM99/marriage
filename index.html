@@ -862,16 +862,32 @@
     margin: .22em 0 .2em;
     line-height: 1.05;
     color: #fff;
+    position: relative;
+  }
+
+  /* Soft-focus ghost for the reveal: a transparent copy of the title whose only ink is
+     a blurred text-shadow. It is rasterized once when the node reveals, then merely
+     faded out on the compositor — the blur itself is never re-computed per frame. */
+  .node .cap-t::after {
+    content: attr(data-t);
+    position: absolute;
+    inset: 0;
+    color: transparent;
+    text-shadow: 0 0 8px var(--ghost-c, rgba(255, 255, 255, .9));
+    opacity: 0;
+    pointer-events: none;
   }
 
   .node .cap-t.gold {
     color: var(--gold);
     text-shadow: 0 0 26px rgba(234, 197, 108, .4);
+    --ghost-c: rgba(234, 197, 108, .95);
   }
 
   .node .cap-t.wine {
     color: var(--wine-soft);
     text-shadow: 0 0 28px rgba(232, 93, 117, .65);
+    --ghost-c: rgba(232, 93, 117, .95);
   }
 
   .node .cap-s {
@@ -900,6 +916,10 @@
 
   .node.revealed .cap-t {
     animation: condense .8s var(--ease) both;
+  }
+
+  .node.revealed .cap-t::after {
+    animation: ghostFade .8s var(--ease) both;
   }
 
   .dot-core {
@@ -997,6 +1017,40 @@
     transform-origin: center;
     animation: diyaHaloPulse 2.6s ease-in-out infinite;
   }
+
+  /* The mandapam's stage flame, switched off on request — the small light on the
+     stage diya flickered up and down and read as an unwanted bouncing light. Kept
+     here rather than deleted. To bring it back, uncomment this block AND the
+     path.stage-flame inside #pulse-svg. It lived in the pulse overlay, not the rail,
+     so its flicker repainted a tiny region instead of invalidating the rail's large
+     composited texture; restore it there, not in the rail SVG.
+
+  .stage-flame {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: stageFlick 1.6s ease-in-out infinite;
+  }
+
+  #journey-wrap:not(.travelling) .stage-flame {
+    animation-play-state: paused;
+  }
+
+  @keyframes stageFlick {
+
+    0%,
+    100% {
+      transform: scale(1, 1);
+    }
+
+    33% {
+      transform: scale(1, 1.1);
+    }
+
+    66% {
+      transform: scale(1, .95);
+    }
+  }
+  */
 
   @keyframes diyaFlicker {
 
@@ -2486,17 +2540,31 @@
     }
   }
 
+  /* The title condense used to animate letter-spacing (a re-layout of the text every
+     frame) and filter:blur (a CPU Gaussian re-blur every frame on iOS — same WebKit
+     disease as the old drop-shadows). Together they froze the page for the length of
+     the animation at every checkpoint reveal on iPhones. The same read is rebuilt from
+     compositor-only properties: scaleX condenses the spread, and a blurred ghost copy
+     of the title (painted once, then only faded) carries the coming-into-focus look. */
   @keyframes condense {
     from {
-      letter-spacing: .34em;
-      filter: blur(8px);
+      transform: scaleX(1.28);
       opacity: 0;
     }
 
     to {
-      letter-spacing: .01em;
-      filter: blur(0);
+      transform: scaleX(1);
       opacity: 1;
+    }
+  }
+
+  @keyframes ghostFade {
+    from {
+      opacity: .85;
+    }
+
+    to {
+      opacity: 0;
     }
   }
 
@@ -2858,13 +2926,14 @@
                 <rect x="-5" y="-2" width="10" height="6" fill="#1A0D1F" opacity=".9" />
               </g>
 
-              <!-- Central kalyana diya on the stage floor -->
+              <!-- Central kalyana diya on the stage floor. The lamp keeps its glow and
+                   bowl; the flickering flame above it is switched off on request and
+                   sits commented out in #pulse-svg, which is where it must go back if
+                   it returns. An infinite animation inside THIS SVG would force iOS to
+                   re rasterize part of the large composited layer the rail is promoted
+                   to during travel, which is what made the mandapam chug on iPhones. -->
               <ellipse cx="0" cy="60" rx="10" ry="2.2" fill="#EAC56C" opacity=".9" />
               <path d="M-7 58 Q0 68 7 58 Q5 62 0 64 Q-5 62 -7 58 Z" fill="#8A6420" />
-              <path d="M0 48 C-3 52 -2.5 56 0 60 C2.5 56 3 52 0 48 Z" fill="#FFE7C4">
-                <animateTransform attributeName="transform" type="scale" values="1 1;1 1.1;1 .95;1 1" dur="1.6s"
-                  repeatCount="indefinite" additive="sum" />
-              </path>
             </g>
 
           </svg>
@@ -2893,6 +2962,19 @@
                 <stop offset="1" stop-color="#E85D75" stop-opacity="0" />
               </radialGradient>
             </defs>
+            <!-- The mandapam's stage flame, switched off on request (the light that
+                 flickered up and down on the stage diya). Kept for a possible return:
+                 uncomment the group below together with the .stage-flame block in the
+                 stylesheet. The wrapper transform matches the #mandapam group in the
+                 rail SVG, so the shared grid drops the flame back onto the stage diya.
+                 It belongs here rather than in the rail: a flicker in this overlay
+                 repaints a small region, while the same flicker inside the rail forces
+                 iOS to re rasterize part of that large composited texture every frame.
+
+            <g transform="translate(2057 416) scale(0.96)">
+              <path class="stage-flame" d="M0 48 C-3 52 -2.5 56 0 60 C2.5 56 3 52 0 48 Z" fill="#FFE7C4" />
+            </g>
+            -->
             <g id="pulseLayer"></g>
           </svg>
 
@@ -5089,6 +5171,11 @@
       else { c = "rgba(255,231,196,.60)"; d = 130; }
       g.style.setProperty("--halo-c", c);
       g.style.setProperty("--halo-d", d + "px");
+    });
+    /* The reveal's soft-focus ghost (.cap-t::after) draws its text from data-t. */
+    nodes.forEach(function (n) {
+      var t = n.querySelector(".cap-t");
+      if (t) t.setAttribute("data-t", t.textContent);
     });
     var VB_W = 2600, VB_H = 700, trackW = 0, HALF_GLYPH = 33;
     var jPin = document.getElementById("journey-pin");
