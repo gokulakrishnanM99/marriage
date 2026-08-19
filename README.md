@@ -43,7 +43,9 @@ python -m http.server 8080
 | Path | Purpose |
 |------|---------|
 | `index.html` | The entire experience — the deliverable. |
-| `fonts/` | Self-hosted **Cormorant Garamond**, **Inter**, **Space Mono** (WOFF2, latin subset). |
+| `fonts/` | Self-hosted display and body faces (WOFF2, latin subset). |
+| `gallery/` | The photographs, plus `opt/` — the small copies phones are served. |
+| `gallery/build-variants.ps1` | Regenerates `gallery/opt/` after photos change. Not served. |
 | `supabase/schema.sql` | Tables, rules and functions behind the shared song wall. Not served. |
 | `.nojekyll` | Tells GitHub Pages to serve files as-is (no Jekyll processing). |
 
@@ -89,6 +91,105 @@ exists. Behaviour is identical either way — only the reach changes.
   that loophole means asking guests to sign in, which the invitation shouldn't.
 - Clearing the wall before the day: `truncate public.song_claims cascade;`
 
+## The convergence countdown
+
+The card in the invitation section: two beams — one gold, one wine — closing on a
+single bright point, with the days remaining above them.
+
+### How far apart the beams sit
+
+Days left is not something the eye should read linearly. Spread evenly across a
+year the beams are all but touching a month out, and there is nothing left to
+watch in the weeks that actually matter. So the approach is curved, and it has
+**one dial** — `APPROACH_DAYS` in `index.html`:
+
+```js
+var APPROACH_DAYS = 8;
+```
+
+**Read it as: the two lights are half-way to meeting when this many days are
+left.** At `8`, the half-closed look lands 8 days out.
+
+- **Closer, sooner** — approaching earlier and more gently → **raise** it.
+- **Wide apart for longer**, then rushing in at the end → **lower** it.
+
+To predict any value: `gap ≈ daysLeft / (daysLeft + APPROACH_DAYS)`, where 1 is
+fully apart and 0 is met. At the current setting:
+
+| Days left | 90 | 30 | 14 | 8 | 3 | 1 | 0 |
+|---|---|---|---|---|---|---|---|
+| Apart | 94% | 81% | 65% | 51% | 28% | 11% | met |
+
+Two secondary dials, if the whole thing should be wider or narrower regardless of
+the date: the `0.94` in `beamGap()` is the maximum spread, and `half = W * 0.46`
+in `drawConv()` is how much of the card's width the beams travel across. Leave
+both alone for a normal adjustment.
+
+The gap is computed on **fractional** days, so the final hours travel smoothly
+into the muhurtham rather than jumping the last stretch at midnight. The card
+still prints whole days.
+
+### The bright point, and the arrival
+
+The centre light is sized and lit by **how closed the beams are**, not by the
+calendar — so it swells as they actually come in. (It used to follow the linear
+year, which meant it reached ~96% of its size a month out and then grew by about
+a pixel on the day itself.) On the day, two cream rings leave the bright point
+and fade as they widen; they are skipped entirely under
+`prefers-reduced-motion`, and cost nothing on any other day.
+
+### Three states
+
+The card knows the day can arrive and pass:
+
+| When | Reads |
+|------|-------|
+| Before | *Until our two paths meet again* — **N** days |
+| From the reception until 6h after the muhurtham | *The two paths meet* — **Today** |
+| After that | *Two paths · one bright point* — **Married** |
+
+### Previewing it
+
+The arrival happens once, on one date, so there is a way to stand in front of it:
+
+| URL | Shows |
+|-----|-------|
+| `?ccdays=3` | three days out |
+| `?ccphase=today` | the day itself |
+| `?ccphase=after` | the morning after |
+
+Written after a `#` instead of a `?` these work identically and never leave the
+browser, which is the easier one to thumb into a phone: `#ccphase=today`. They
+only move what this one card displays — the invitation's real dates, the `.ics`
+file and everything else are untouched.
+
+## The gallery
+
+Photographs live in `gallery/`. They are a mix of upright and wide, so each tile
+keeps its own proportions rather than being cropped to a common shape, and the
+columns pack around them (3 → 2 at 820px). Each frame starts as a blur of every
+possible moment and collapses into focus on hover, on tap, or as it crosses the
+centre of a phone screen.
+
+**After adding or replacing a photo**, regenerate the small copies the page
+serves to phones:
+
+```bash
+pwsh -File gallery/build-variants.ps1
+```
+
+That writes 400px and 760px versions into `gallery/opt/` using only the imaging
+built into Windows — no toolchain to install — and never touches the originals.
+Then add a line to `galleryData` in `index.html` with the file's real pixel
+width and height (the script prints them) and an `alt` description. The
+dimensions reserve each tile's space before the file arrives, so nothing below
+jumps as the wall fills.
+
+Everything is lazy-loaded and nothing is preloaded, so the gallery costs the
+page nothing until a guest scrolls to it. A phone pulls ~196 KB for all five
+frames against ~823 KB for the originals. **`gallery/opt/` must be committed** —
+without it the site 404s on every photo.
+
 ## Notes
 
 - **Fonts** are self-hosted (no Google CDN) so text loads instantly and reliably,
@@ -101,9 +202,10 @@ exists. Behaviour is identical either way — only the reach changes.
   are the same instant on a phone set to any timezone. `WEDDING_DATE` drives the countdown;
   the Save-the-date button writes both events into one calendar file. The dates and times a
   guest reads are the three cells in the invitation section, and the venue link is `MAPS_URL`.
-- **The convergence countdown** measures against `PLAN_WINDOW` (365 days): the two beams
-  and the progress bar under them both sit at `daysLeft / PLAN_WINDOW` along the line, so
-  they close by one day's worth every day and meet at the centre on the day itself.
+- **The convergence countdown** has its own section above. The progress bar under the
+  beams is the linear one — `1 - daysLeft / PLAN_WINDOW` across a 365-day window — while
+  the beams themselves follow the curve in `beamGap()`. They are deliberately different:
+  the bar is how much of the wait is behind you, the beams are how near the two are.
 - **The journey** opens with the diya centred on screen and closes with the mandapam
   centred on screen, on any aspect ratio — `travelFrom` / `travelTo` in `layoutJourney()`
   are derived from the two nodes' positions rather than from the track's edges.

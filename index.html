@@ -14,8 +14,14 @@
 
 <style>
   /* Self-hosted fonts (latin subset) — replaces the Google Fonts CDN so text
-     loads instantly, offline, and reliably on mobile. Generated from the same
-     Cormorant Garamond / Inter / Space Mono weights the site already used. */
+     loads instantly, offline, and reliably on mobile.
+
+     The display face is Cormorant Garamond — the whole page is set in it and the
+     names depend on it. It has one weak spot: its numerals are small and finely
+     stroked, and they go soft where a date sits on a glass panel or where the
+     countdown is filled with a gold gradient at 98px. Rather than change the
+     display face for the sake of three numbers, those three places alone use a
+     second face — see --font-figure below. */
 
   @font-face {
     font-family: 'Cormorant Garamond';
@@ -59,6 +65,65 @@
     font-weight: 400;
     font-display: swap;
     src: url('fonts/cormorant-garamond-400-italic.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+
+  /* ============================================================
+     FIGURE FACES — candidates for the two dates and the countdown
+     ------------------------------------------------------------
+     These four are declared but only ONE is ever downloaded: a browser fetches
+     a @font-face file only when something on the page actually renders in it, so
+     the three you are not using cost nothing at load. Pick one in the
+     --font-figure switch further down (search for "FIGURE FACE SWITCH").
+
+     None of these is a Didone, and none is a system font. They were shortlisted
+     by setting each one in the real cell at the real size over the real gold
+     gradient — Cormorant's own "11" comes out as two hairlines the gradient
+     washes straight through, which is the whole reason this exists.
+     ============================================================ */
+
+  /* Soft old-style, flared serifs, warm. Variable on optical size AND weight, so
+     the 24px date gets the sturdy text cut and the 92px countdown the finer
+     display cut from one file. Do not set font-optical-sizing: none. */
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/fraunces-var.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+
+  /* Refined transitional cut drawn for screens. Quieter than Fraunces, closest of
+     the eight to Cormorant's own manner. Also variable on optical size. */
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/newsreader-var.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+
+  /* Sturdiest figures of the four — squarish, very legible on glass, least
+     ornamental. The safe pick if the others feel too decorative. */
+  @font-face {
+    font-family: 'Literata';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/literata-var.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+
+  /* Clean and even, no flourish. The most neutral option that still is not a
+     system font — but the lightest "1" of the four. */
+  @font-face {
+    font-family: 'Spectral';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('fonts/spectral-500.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
   }
 
@@ -148,6 +213,24 @@
     --font-display: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
     --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    /* ---------- FIGURE FACE SWITCH ----------
+       The face for the two dates and the countdown, and nothing else on the page.
+       To try another one: comment out the live line below and uncomment any other,
+       then reload. Nothing else in the file needs touching. */
+    --font-figure: "Fraunces", "Cormorant Garamond", Georgia, serif;
+    /* --font-figure: "Newsreader", "Cormorant Garamond", Georgia, serif; */
+    /* --font-figure: "Literata", "Cormorant Garamond", Georgia, serif; */
+    /* --font-figure: "Spectral", "Cormorant Garamond", Georgia, serif; */
+    /* --font-figure: "Cormorant Garamond", Georgia, serif;  <- no separate face at all */
+
+    /* Exactly one of the lines above must be uncommented. If you leave two live,
+       the LOWER one wins, which is a handy way to try something without deleting
+       your current choice — put the new line at the bottom and delete it later.
+       Each face has a note on its @font-face block near the top of this file
+       saying what it is and what it is good for. Only the face actually in use
+       is downloaded; the other three files sit in fonts/ and cost nothing.
+       Eczar, Faustina, DM Serif Display and Marcellus were tried and dropped;
+       their files are gone from fonts/ too. */
 
     --ease: cubic-bezier(.16, 1, .3, 1);
     --ease-io: cubic-bezier(.65, 0, .35, 1);
@@ -1352,6 +1435,16 @@
     text-wrap: balance;
   }
 
+  /* The two dates only. The third cell's .v is the venue name, which stays in the
+     display face along with every other name on the page. */
+  .cell .v.dt {
+    font-family: var(--font-figure);
+    font-weight: 500;
+    /* Fraunces sets a touch larger on the body than Cormorant at the same size */
+    font-size: clamp(22px, 2.9vw, 30px);
+    letter-spacing: 0;
+  }
+
   /* The ordinal on a date rides high and small, as it would on a card. */
   .cell .v sup {
     font-size: .52em;
@@ -1469,13 +1562,15 @@
     letter-spacing: .015em;
   }
 
+  /* The countdown figure — the one number on the page filled with a gradient, so
+     the face here is the figure face, not the display face. See --font-figure. */
   .cc-num b {
-    font-family: var(--font-display);
+    font-family: var(--font-figure);
     font-weight: 500;
-    font-size: clamp(54px, 12vw, 98px);
+    font-size: clamp(50px, 11vw, 92px);
     line-height: 1.05;
     padding-bottom: .12em;
-    letter-spacing: .01em;
+    letter-spacing: 0;
     font-variant-numeric: tabular-nums;
     background: linear-gradient(180deg, #fff, #F5E4B8 58%, var(--gold));
     -webkit-background-clip: text;
@@ -1631,30 +1726,71 @@
   }
 
   /* ===================== GALLERY ===================== */
-  /* Columns rather than a fixed grid: the photographs are a mix of upright
-     and wide, and a single tile shape would have to crop one of the two to
-     death — the wide frames lose the person on the far side. Each tile keeps
-     its own proportions and the columns pack around them. */
+  /* This used to be a CSS multi-column block, which decides where each photo
+     lands by balancing the columns' heights. That balance depends on the exact
+     rendered height of every frame, so the wall packed itself differently on
+     every screen width — and differently again on iOS, where the address bar
+     changes the viewport mid-scroll. The set of photographs is final, so the
+     arrangement is now written down instead of computed: each column is a real
+     element and the script puts named photos in it. See GALLERY_COLUMNS. */
   #gallery .grid {
-    columns: 3;
-    column-gap: clamp(10px, 1.6vw, 18px);
+    display: grid;
+    grid-template-columns: repeat(var(--gcols, 3), 1fr);
+    gap: clamp(10px, 1.6vw, 18px);
     max-width: 1100px;
     margin: clamp(44px, 7vw, 76px) auto 0;
+    align-items: stretch;
   }
 
-  @media(max-width:820px) {
-    #gallery .grid {
-      columns: 2;
+  .gcol {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vw, 18px);
+  }
+
+  /* Three columns, and the middle one holds two wide frames stacked. That pair
+     sets the height of the whole row; the two upright photographs either side
+     stretch to meet it, so the three columns end level instead of ragged.
+     Each upright frame gives up a little of itself to do that — where it gives
+     it up is set by object-position further down, never from the subject's side. */
+  @media(min-width:821px) {
+
+    .tile.g1,
+    .tile.g4 {
+      flex: 1;
+      aspect-ratio: auto;
     }
+  }
+
+  /* Two columns: photos 1+2, then 3+4. Left column comes to 2.00 times its own
+     width, right column would come to 2.17 — photo 4 is trimmed to 3:4 to bring
+     the two level, which is the one crop this layout needs on a phone. */
+  @media(max-width:820px) {
+    .tile.g4 {
+      aspect-ratio: 3 / 4;
+    }
+  }
+
+  /* Where each upright photograph is allowed to lose its edge when the grid asks
+     it to fill a shape other than its own: photo 1 keeps its left (the crop eats
+     into the right, stopping short of the hand), photo 4 keeps its top. */
+  .tile.g1 img {
+    object-position: left center;
+  }
+
+  .tile.g4 img {
+    object-position: center top;
   }
 
   .tile {
     position: relative;
-    /* Overridden per photo from its real pixel size, so the space is reserved
-       before the file arrives and nothing below it jumps as the wall fills. */
-    aspect-ratio: 3/4;
-    break-inside: avoid;
-    margin-bottom: clamp(10px, 1.6vw, 18px);
+    /* --ar is the photograph's real pixel shape, handed over by the script, so
+       the space is reserved before the file arrives and nothing below it jumps
+       as the wall fills. It is a custom property rather than an inline
+       aspect-ratio so the layout rules above can override it per breakpoint —
+       an inline style would win over them. The columns space themselves with
+       flex gap now, so no per-tile margin. */
+    aspect-ratio: var(--ar, 3/4);
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--line);
@@ -2803,37 +2939,32 @@
             </g>
 
             <!-- single white beam entering the slit -->
-            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="26"
-              opacity=".08" />
-            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="12"
-              opacity=".26" />
+            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="26" opacity=".08" />
+            <path d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="12" opacity=".26" />
             <path id="originTrail" d="M200,350 C249,348 307,352 383,350" fill="none" stroke="#eef0ff" stroke-width="5"
               opacity=".95" />
 
             <!-- HER ray — GOLD -->
-            <path
-              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
-              stroke="#EAC56C" stroke-width="30" opacity=".05" mask="url(#laneNotch)" />
+            <path d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350"
+              fill="none" stroke="#EAC56C" stroke-width="30" opacity=".05" mask="url(#laneNotch)" />
             <path id="laneHerGlow"
               d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
               stroke="#EAC56C" stroke-width="16" opacity=".10" mask="url(#laneNotch)" />
-            <path
-              d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
-              stroke="#EAC56C" stroke-width="8" opacity=".22" mask="url(#laneNotch)" />
+            <path d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350"
+              fill="none" stroke="#EAC56C" stroke-width="8" opacity=".22" mask="url(#laneNotch)" />
             <path id="laneHer"
               d="M389,317 C479,309 561,244 659,182 C905,182 1200,178 1496,184 C1727,188 1850,255 2057,350" fill="none"
               stroke="#EAC56C" stroke-width="3.5" mask="url(#laneNotch)" />
 
             <!-- HIS ray — WINE RED -->
-            <path
-              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
-              stroke="#E85D75" stroke-width="32" opacity=".08" mask="url(#laneNotch)" />
+            <path d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350"
+              fill="none" stroke="#E85D75" stroke-width="32" opacity=".08" mask="url(#laneNotch)" />
             <path id="laneHisGlow"
               d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
               stroke="#E85D75" stroke-width="18" opacity=".16" mask="url(#laneNotch)" />
-            <path
-              d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
-              stroke="#E85D75" stroke-width="10" opacity=".24" stroke-dasharray="8 12" mask="url(#laneNotch)" />
+            <path d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350"
+              fill="none" stroke="#E85D75" stroke-width="10" opacity=".24" stroke-dasharray="8 12"
+              mask="url(#laneNotch)" />
             <path id="laneHis"
               d="M389,388 C479,398 561,456 659,528 C905,528 1266,532 1660,524 C1840,520 1922,455 2057,350" fill="none"
               stroke="#E85D75" stroke-width="4.2" stroke-dasharray="8 12" mask="url(#laneNotch)" />
@@ -3297,7 +3428,7 @@
               </svg>
             </div>
             <div class="k">Reception</div>
-            <div class="v display">30<sup>th</sup> August 2026</div>
+            <div class="v dt">30<sup>th</sup> August 2026</div>
             <div class="v-sub">Sunday<br>6:00 PM onwards</div>
           </div>
           <div class="cell">
@@ -3316,7 +3447,7 @@
               </svg>
             </div>
             <div class="k">Wedding</div>
-            <div class="v display">31<sup>st</sup> August 2026</div>
+            <div class="v dt">31<sup>st</sup> August 2026</div>
             <div class="v-sub">Monday<br>6:00 – 7:30 AM</div>
           </div>
           <div class="cell">
@@ -3405,7 +3536,7 @@
 
     <!-- ===================== OUTRO ===================== -->
     <section id="outro">
-      <div class="monogram display rise">Thirumalai <em>&amp;</em> Pooja</div>
+      <div class="monogram display rise">Thiru <em>&amp;</em> Pooja</div>
       <div class="bless rise">Two paths · one bright point · across the same sky</div>
     </section>
 
@@ -5646,28 +5777,44 @@
       { f: "thirumalai-pooja-1", ext: "jpeg", w: 960, h: 1280, alt: "Thirumalai and Pooja laughing together while choosing silks" },
       { f: "thirumalai-pooja-2", ext: "jpeg", w: 1280, h: 854, alt: "Thirumalai taking Pooja's hand at the ceremony, both in garlands" },
       { f: "thirumalai-pooja-3", ext: "jpeg", w: 1280, h: 854, alt: "Thirumalai smiling with a bouquet of red roses as Pooja hands it over" },
-      { f: "thirumalai-pooja-4", ext: "jpeg", w: 854, h: 1280, alt: "Pooja looking up at Thirumalai in low light, close together" },
-      { f: "thirumalai-pooja-5", ext: "jpeg", w: 960, h: 1280, alt: "Thirumalai and Pooja mid-laugh, standing side by side" }
+      { f: "thirumalai-pooja-4", ext: "jpeg", w: 854, h: 1280, alt: "Pooja looking up at Thirumalai in low light, close together" }
+      /* thirumalai-pooja-5 was taken out of the wall. Its files are still in
+         gallery/ and gallery/opt/ — put the line back to show it again. */
     ];
+
+    /* The arrangement, written down rather than left to the browser. Each inner
+       array is one column, top to bottom, holding indexes into galleryData.
+       Wide screens get three columns, phones two; nothing here depends on how
+       tall a photograph turns out to be, so the wall lands identically on every
+       device. Photos are final, so this does not need to generalise. */
+    var GALLERY_COLUMNS = {
+      wide: [[0], [1, 2], [3]],       /*  1 | 2,3 | 4  */
+      narrow: [[0, 1], [2, 3]]        /*  1,2 | 3,4    */
+    };
+
     var gGrid = document.getElementById("galleryGrid");
     var HOVERS = matchMedia("(hover:hover)").matches;
-    galleryData.forEach(function (g) {
+    var gTiles = [];
+    galleryData.forEach(function (g, gi) {
       var el = document.createElement("div");
-      el.className = "tile"; el.tabIndex = 0; el.setAttribute("data-cursor", "observe");
+      /* g1…g4 let the stylesheet address a specific photograph — which ones
+         stretch to fill a column, and which edge each may lose to a crop. */
+      el.className = "tile g" + (gi + 1); el.tabIndex = 0; el.setAttribute("data-cursor", "observe");
       /* The tile's shape is the photograph's shape — reserved before the file
          loads, so the page below never jumps. */
-      el.style.aspectRatio = g.w + " / " + g.h;
+      el.style.setProperty("--ar", g.w + " / " + g.h);
 
       /* Three widths, and the browser takes the one that suits the screen it
          is actually on: a phone never pulls the laptop's file. `sizes` mirrors
-         the two-then-three column layout above. */
+         the layout: two columns of ~44vw on a phone, three of ~355px on a desk
+         (1100px of grid less two gaps, divided by three). */
       var srcset = "gallery/opt/" + g.f + "-400.jpg 400w, gallery/opt/" + g.f + "-760.jpg 760w, "
         + "gallery/" + g.f + "." + g.ext + " " + g.w + "w";
       /* No caption, no status line — the photograph carries itself. `alt` stays
          for screen readers; it is never drawn. */
       el.innerHTML =
         '<div class="ph"><img src="gallery/opt/' + g.f + '-760.jpg" srcset="' + srcset + '"'
-        + ' sizes="(max-width: 820px) 44vw, 340px" width="' + g.w + '" height="' + g.h + '"'
+        + ' sizes="(max-width: 820px) 44vw, 355px" width="' + g.w + '" height="' + g.h + '"'
         + ' alt="' + escapeHTML(g.alt) + '" loading="lazy" decoding="async"></div>'
         + '<div class="flash"></div>';
 
@@ -5685,12 +5832,32 @@
       function un() { if (HOVERS) el.classList.remove("observed"); }
       el.addEventListener("pointerenter", ob); el.addEventListener("pointerleave", un);
       el.addEventListener("click", ob); el.addEventListener("focus", ob);
-      gGrid.appendChild(el);
+      gTiles.push(el);
       if (!HOVERS) {
         var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { ob(); io.unobserve(el); } }); }, { threshold: .6 });
         io.observe(el);
       }
     });
+
+    /* Hang the tiles in their columns. The tiles themselves are built once and
+       kept in gTiles, so switching arrangement moves the same elements — the
+       photographs are not re-fetched and a frame already brought into focus
+       stays that way. Only fires when the breakpoint is actually crossed. */
+    var gWide = matchMedia("(min-width:821px)");
+    function layoutGallery() {
+      var cols = gWide.matches ? GALLERY_COLUMNS.wide : GALLERY_COLUMNS.narrow;
+      gGrid.textContent = "";
+      gGrid.style.setProperty("--gcols", cols.length);
+      cols.forEach(function (idxs) {
+        var col = document.createElement("div");
+        col.className = "gcol";
+        idxs.forEach(function (i) { if (gTiles[i]) col.appendChild(gTiles[i]); });
+        gGrid.appendChild(col);
+      });
+    }
+    layoutGallery();
+    if (gWide.addEventListener) gWide.addEventListener("change", layoutGallery);
+    else gWide.addListener(layoutGallery);   /* older iOS Safari */
 
     /* ============================================================
        5. DJ FREQUENCY — flat line -> audio waveform + spinnable CD
