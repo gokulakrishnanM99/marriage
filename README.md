@@ -1,4 +1,4 @@
-# Thirumalai & Pooja Prasad — 
+# Thirumalai & Pooja Prasad
 
 It's an IIT Boy weds an AIIMS Girl  
 Wedding - Aug 31, Reception Aug 30, Chennai 
