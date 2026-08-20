@@ -1,4 +1,9 @@
-# Thirumalai & Pooja — Two Paths, One Sky
+# Thirumalai & Pooja Prasad — 
+
+It's an IIT Boy weds an AIIMS Girl  
+Wedding - Aug 31, Reception Aug 30, Chennai 
+
+Two Paths, One Sky
 
 A cinematic, single-page wedding invitation. One light, sent through a double slit,
 and two paths — a quantum engineer and a doctor — arriving at the same bright point.
